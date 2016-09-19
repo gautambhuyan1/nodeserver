@@ -1,11 +1,14 @@
 var app = require('express')();
 var lib = require('body-parser');
+var db = require('./db.js');
 
 app.use(lib.json());
 app.use(lib.urlencoded({extended:true}));
 
 app.get('/interests', function(req, res) {
-    var interests = ["cricket", "soccer", "music", "photography"];
+    var interests = db.getInterests();
+    console.log('Printing interests...');
+    console.log(interests);
     res.json(interests);
 });
     
@@ -13,7 +16,7 @@ app.get('/activities/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
     var interest = req.params.interest;
     var lat = req.params.lat;
     var lng = req.params.lng;
-    var activityList = {interest : interest, lat: lat, lng: lng};
+    var activityList = db.getActivities(interest, lat, lng);
     //console.log(activityList);
     res.json(activityList);
 });
@@ -26,17 +29,25 @@ app.get('/messages/activity/:activity', function(req, res) {
     res.json(messageList);
 });
     
-app.post('/activity', function(req, res) {
+app.post('/interest', function(req, res) {
     var interest = req.body.interest;
+    db.addInterest(interest);
+    console.log({interest:interest});
+    res.json({done:true});
+});
+    
+app.post('/activity', function(req, res) {
+    var interest = req.body.interest,
         lat = req.body.lat,
         lng = req.body.lng,
         activity = req.body.activity;
     console.log({interest:interest, lat:lat, lng:lng});
+    db.createActivity(interest, activity, lat, lng);
     res.json({done:true});
 });
     
 app.post('/message', function(req, res) {
-    var activity = req.body.activity;
+    var activity = req.body.activity,
         message = req.body.message;
     console.log({activity:activity, message:message});
     res.json({done:true});
