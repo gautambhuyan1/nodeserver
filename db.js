@@ -11,7 +11,7 @@ mongo.connect("mongodb://localhost/", function(err, db) {
     console.log("db:connected");
 });
 
-exports.getInterests = function(req, res, next) {
+exports.getInterests = function() {
     console.log("@getInterests()");
     var interests = [];
     myDb.collection('interests', function(err, collection){
@@ -22,11 +22,11 @@ exports.getInterests = function(req, res, next) {
                                 interest:docArr[doc].interest});
                 //console.log("iteration ", doc);
             }
-            req.interests = interests;
+            //req.interests = interests;
             console.log(docArr);
             console.log(interests);
             //next();
-            res.send(interests);
+            //res.send(interests);
         });
 
     });
@@ -45,17 +45,13 @@ exports.addInterest = function(myInterest) {
             console.log(results);
         });
     });
-
 }
 
-exports.getActivities = function(req, res, next) {
+exports.getActivities = function(interest, lat, lng) {
     //console.log("@getActivities() "+ myInterest + " " + myPhone+ " " + myLat + " " + myLng);
     console.log("@getActivities()");
     //console.log(req);
     var activities = [];
-    var interest = req.query.interest;
-    var lat = req.query.lat;
-    var lng = req.query.lng;
     console.log("interest: "+interest+" lat:"+lat+" lng:"+lng);
     myDb.collection('activities', function(err, collection){
         var activityCursor = collection.find();
@@ -68,11 +64,11 @@ exports.getActivities = function(req, res, next) {
                                  });
                 //console.log("iteration ", doc);
             }
-            req.activities = activities;
+            //req.activities = activities;
             console.log(docArr);
             console.log(activities);
             //next();
-            res.send(activities);
+            //res.send(activities);
         });
 
     });
