@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Server code to serve a mobile application to serve location based activity listener.",
+  "main": "server.js",
+  "scripts": {
+    "test": "None",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gautambhuyan1/nodeserver.git"
+  },
+  "keywords": [
+    "server"
+  ],
+  "author": "Gautam Bhuyan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gautambhuyan1/nodeserver/issues"
+  },
+  "homepage": "https://github.com/gautambhuyan1/nodeserver#readme",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0"
+  }
+}
