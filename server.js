@@ -6,27 +6,30 @@ app.use(lib.json());
 app.use(lib.urlencoded({extended:true}));
 
 app.get('/interests', function(req, res) {
-    var interests = db.getInterests();
-    console.log('Printing interests...');
-    console.log(interests);
-    res.json(interests);
+    var response = function(data) {
+        res.json(data);
+    }
+        
+    db.getInterests(response);
 });
     
 app.get('/activities/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
     var interest = req.params.interest;
     var lat = req.params.lat;
     var lng = req.params.lng;
-    var activityList = db.getActivities(interest, lat, lng);
-    //console.log(activityList);
-    res.json(activityList);
+    var response = function(data) {
+        res.json(data);
+    }
+    db.getActivities(interest, lat, lng, response);
 });
     
 app.get('/messages/activity/:activity', function(req, res) {
     var activity = req.params.activity;
     //console.log(activity);
-    var messageList = {activity: activity}; 
-    //console.log(messageList);
-    res.json(messageList);
+    var response = function(data) {
+        res.json(data);
+    }
+    db.getMessages(activity, response);
 });
     
 app.post('/interest', function(req, res) {
