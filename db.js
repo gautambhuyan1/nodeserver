@@ -11,7 +11,7 @@ mongo.connect("mongodb://localhost/", function(err, db) {
     console.log("db:connected");
 });
 
-exports.getInterests = function() {
+exports.getInterests = function(callback) {
     console.log("@getInterests()");
     var interests = [];
     myDb.collection('interests', function(err, collection){
@@ -22,16 +22,13 @@ exports.getInterests = function() {
                                 interest:docArr[doc].interest});
                 //console.log("iteration ", doc);
             }
-            //req.interests = interests;
             console.log(docArr);
             console.log(interests);
-            //next();
-            //res.send(interests);
+            callback(interests);
         });
 
     });
     console.log("Printing interests:" +interests);
-    return interests;
 }
 
 exports.addInterest = function(myInterest) {
@@ -47,7 +44,7 @@ exports.addInterest = function(myInterest) {
     });
 }
 
-exports.getActivities = function(interest, lat, lng) {
+exports.getActivities = function(interest, lat, lng, callback) {
     //console.log("@getActivities() "+ myInterest + " " + myPhone+ " " + myLat + " " + myLng);
     console.log("@getActivities()");
     //console.log(req);
@@ -64,16 +61,13 @@ exports.getActivities = function(interest, lat, lng) {
                                  });
                 //console.log("iteration ", doc);
             }
-            //req.activities = activities;
             console.log(docArr);
             console.log(activities);
-            //next();
-            //res.send(activities);
+            callback(activities);
         });
 
     });
     //console.log("### printing interests:" +interests);
-    return activities;
 }
 
 exports.createActivity = function(myInterest, myActivity, myLat, myLng) {
@@ -87,8 +81,9 @@ exports.createActivity = function(myInterest, myActivity, myLat, myLng) {
     });
 }
 
-exports.getMessages = function(activityId, phone) {
+exports.getMessages = function(activityId, phone, callback) {
     console.log("@getMessages()"+activityId+" "+phone);
+    callback(0);
 
 }
 
