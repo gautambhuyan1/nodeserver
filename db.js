@@ -44,14 +44,20 @@ exports.addInterest = function(myInterest) {
     });
 }
 
-exports.getActivities = function(interest, lat, lng, callback) {
+exports.getActivities = function(myInterest, myLat, myLng, callback) {
     //console.log("@getActivities() "+ myInterest + " " + myPhone+ " " + myLat + " " + myLng);
     console.log("@getActivities()");
     //console.log(req);
     var activities = [];
-    console.log("interest: "+interest+" lat:"+lat+" lng:"+lng);
+    console.log("interest: "+myInterest+" lat:"+myLat+" lng:"+myLng);
     myDb.collection('activities', function(err, collection){
-        var activityCursor = collection.find();
+        //var query1 = [{lat:{$eq: parseInt(myLat)}}];
+        //console.log(query1);
+        var query = {$and:[{'interest':{$eq:myInterest}}, {'lat':{$eq: parseInt(myLat)}}, {'lng':{$eq: parseInt(myLng)}}]};
+        //var query = {interest:{$eq:myInterest}};
+        //var activityCursor = collection.find({$and:[{interest:{$eq:interest}}, {lat:{$eq: lat}}, {lng:{$eq: lng}}]});
+        console.log(query);
+        var activityCursor = collection.find(query);
         activityCursor.toArray(function(err, docArr){
             for(doc in docArr) {
                 activities.push({activityid:docArr[doc]._id,
