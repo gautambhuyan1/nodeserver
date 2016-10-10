@@ -5,7 +5,7 @@ var mongo = new mongoClient();
 
 var myDb = null;
 
-mongo.connect("mongodb://172.30.73.176/", function(err, db) {
+mongo.connect("mongodb://admin:secret@172.30.73.176:27017", function(err, db) {
     myDb = db.db("sampledb");
     console.log("db:connected");
 });
