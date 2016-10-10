@@ -1,5 +1,5 @@
-var mongo = new Mongo("localhost");
-var newDb = mongo.getDB("aptivity");
+var mongo = new Mongo("172.30.73.176");
+var newDb = mongo.getDB("sampledb");
 newDb.createCollection("users");
 newDb.createCollection("interests");
 newDb.createCollection("activities");
