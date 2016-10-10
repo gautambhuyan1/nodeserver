@@ -5,8 +5,8 @@ var mongo = new mongoClient();
 
 var myDb = null;
 
-mongo.connect("mongodb://localhost/", function(err, db) {
-    myDb = db.db("aptivity");
+mongo.connect("mongodb://172.30.73.176/", function(err, db) {
+    myDb = db.db("sampledb");
     console.log("db:connected");
 });
 
