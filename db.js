@@ -4,17 +4,18 @@
 exports.getInterests = function(myDb, callback) {
     console.log("@getInterests()");
     var interests = [];
+    var jsonRsp = {"type":"interest", "interests": interests}; 
     myDb.collection('interests', function(err, collection){
         var interestCursor = collection.find();
         interestCursor.toArray(function(err, docArr){
             for(doc in docArr) {
                 interests.push({interestid:docArr[doc]._id,
                                 interest:docArr[doc].interest});
-                //console.log("iteration ", doc);
+                console.log("iteration ", doc);
             }
             console.log(docArr);
-            console.log(interests);
-            callback(interests);
+            console.log(jsonRsp);
+            callback(jsonRsp);
         });
 
     });
@@ -41,6 +42,7 @@ exports.getActivities = function(myDb, myInterest, myLat, myLng, callback) {
     console.log("@getActivities()");
     //console.log(req);
     var activities = [];
+    var jsonRsp = {"type":"activity", "activities": activities}; 
     console.log("interest: "+myInterest+" lat:"+myLat+" lng:"+myLng);
     myDb.collection('activities', function(err, collection){
         //var query1 = [{lat:{$eq: parseInt(myLat)}}];
@@ -48,20 +50,26 @@ exports.getActivities = function(myDb, myInterest, myLat, myLng, callback) {
    
         var query = {$and:[{'interest':{$eq:myInterest}}, {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}}]};
  
-        //console.log(query);
+           //query = {};
+        if (myInterest == "all") {
+           query = {};
+        }
+
+        console.log(query);
         collection.ensureIndex({location:'2d'});
         var activityCursor = collection.find(query);
         activityCursor.toArray(function(err, docArr){
             for(doc in docArr) {
-                activities.push({activityid:docArr[doc]._id,
+                activities.push({interest:docArr[doc].interest,
+                                 activityid:docArr[doc]._id,
                                  activity:docArr[doc].activity,
                                  location:docArr[doc].location
                                  });
                 //console.log("iteration ", doc);
             }
             //console.log(docArr);
-            console.log(activities);
-            callback(activities);
+            console.log(jsonRsp);
+            callback(jsonRsp);
         });
 
     });
@@ -85,6 +93,7 @@ exports.getMessages = function(myDb, myActivityId, callback) {
     console.log("@getMessages()"+myActivityId);
     var response;
     var messages = [];
+    var jsonRsp = {"type":"messages", "activityid": myActivityId, "messages": messages}; 
     myDb.collection('messages', function(err, collection){
         var query = {"activity": myActivityId};
  
@@ -92,16 +101,15 @@ exports.getMessages = function(myDb, myActivityId, callback) {
         var messageCursor = collection.find(query);
         messageCursor.toArray(function(err, docArr){
             for(doc in docArr) {
-                messages.push({"message":docArr[doc].message});
+                messages.push({"userid": "dummy", "message":docArr[doc].message});
                 //console.log(messages);
                 //console.log({"message":docArr[doc].message});
                 //console.log("iteration ", doc);
             }
             //console.log(docArr);
             //console.log(messages);
-            response = {activityid: myActivityId, messages: messages};
             //console.log("Response:"+response);
-            callback(response);
+            callback(jsonRsp);
         });
     });
 }
