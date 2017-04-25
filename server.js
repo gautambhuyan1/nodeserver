@@ -1,46 +1,15 @@
 //  OpenShift sample Node application
 var express = require('express'),
-    fs      = require('fs'),
     app     = express(),
-    eps     = require('ejs'),
-    morgan  = require('morgan'),
     lib     = require('body-parser'),
     dbapp   = require('./db.js');
     
-Object.assign=require('object-assign')
-
-app.engine('html', require('ejs').renderFile);
-app.use(morgan('combined'))
-
-var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-    ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
-    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
-    mongoURLLabel = "";
-
-if (mongoURL == null && process.env.DATABASE_SERVICE_NAME) {
-  var mongoServiceName = process.env.DATABASE_SERVICE_NAME.toUpperCase(),
-      mongoHost = process.env[mongoServiceName + '_SERVICE_HOST'],
-      mongoPort = process.env[mongoServiceName + '_SERVICE_PORT'],
-      mongoDatabase = process.env[mongoServiceName + '_DATABASE'],
-      mongoPassword = process.env[mongoServiceName + '_PASSWORD']
-      mongoUser = process.env[mongoServiceName + '_USER'];
-
-  if (mongoHost && mongoPort && mongoDatabase) {
-    mongoURLLabel = mongoURL = 'mongodb://';
-    if (mongoUser && mongoPassword) {
-      mongoURL += mongoUser + ':' + mongoPassword + '@';
-    }
-    // Provide UI label that excludes user id and pw
-    mongoURLLabel += mongoHost + ':' + mongoPort + '/' + mongoDatabase;
-    mongoURL += mongoHost + ':' +  mongoPort + '/' + mongoDatabase;
-  }
-}
-
 var db = null,
     dbDetails = new Object();
 
 var initDb = function(callback) {
 //console.log("InitDB called"+mongoURL);
+  mongoURL = "mongodb://localhost/";
   if (mongoURL == null) return;
 
   var mongodb = require('mongodb');
@@ -53,10 +22,10 @@ var initDb = function(callback) {
     }
 
 console.log("InitDB return"+conn);
-    db = conn;
+    db = conn.db("aptivity");
     console.log("initDb "+ db);
     dbDetails.databaseName = db.databaseName;
-    dbDetails.url = mongoURLLabel;
+    //dbDetails.url = mongoURLLabel;
     dbDetails.type = 'MongoDB';
 
     db.createCollection("users", {strict: true});
@@ -131,6 +100,7 @@ app.get('/activities/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
     var interest = req.params.interest;
     var lat = req.params.lat;
     var lng = req.params.lng;
+    console.log("Activities", interest, lat, lng);
     var response = function(data) {
         res.json(data);
     }
@@ -142,7 +112,7 @@ app.get('/activities/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
     
 app.get('/messages/activity/:activity', function(req, res) {
     var activity = req.params.activity;
-    //console.log(activity);
+    console.log("Messages", activity);
     var response = function(data) {
         res.json(data);
     }
@@ -157,6 +127,7 @@ app.post('/interest', function(req, res) {
     if (!db) {
       initDb(function(err){});
     }
+    console.log("Create Interest", interest);
     dbapp.addInterest(db, interest);
     console.log({interest:interest});
     res.json({done:true});
@@ -164,8 +135,8 @@ app.post('/interest', function(req, res) {
     
 app.post('/activity', function(req, res) {
     var interest = req.body.interest,
-        lat = req.body.lat,
-        lng = req.body.lng,
+        lat = parseFloat(req.body.lat),
+        lng = parseFloat(req.body.lng),
         activity = req.body.activity;
     console.log({interest:interest, lat:lat, lng:lng});
     if (!db) {
@@ -188,12 +159,15 @@ app.post('/message', function(req, res) {
 });
     
 app.use(function(req, res, next) {
-    res.writeHead(200, {'Content-type' : 'text/html'});
-    res.end("<h1>Unsupported function<\h1>");
+    console.log("Unsupported function", req);
+    //res.writeHead(200, {'Content-type' : 'text/html'});
+    //res.end("");
+    res.json({done:true});
     next();
 });
 
-app.listen(port, ip);
-console.log('Server running on http://%s:%s', ip, port);
+//app.listen(port, ip);
+app.listen(3030);
+//console.log('Server running on http://%s:%s', ip, port);
 
 module.exports = app ;
