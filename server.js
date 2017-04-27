@@ -176,7 +176,7 @@ app.post('/message', function(req, res) {
 
 
     var update_response = function() {
-        //Done
+       res.json({done:true});
     }
 
     dbapp.createMessage(db, activity, message, update_response);
