@@ -77,13 +77,14 @@ exports.getActivities = function(myDb, myInterest, myLat, myLng, callback) {
 }
 
 // Create a new activity - store interest, location and activity
-exports.createActivity = function(myDb, myInterest, myActivity, myLat, myLng) {
+exports.createActivity = function(myDb, myInterest, myActivity, myLat, myLng, callback) {
     console.log("@createActivities() "+myInterest+" "+myActivity+" "+myLat+" "+myLng);
     var activityToAdd = {interest:myInterest, activity: myActivity, location:[myLat, myLng]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('activities', function(err, collection) {
         collection.insert(activityToAdd, options, function(err, results) {
             console.log(results);
+            callback({"type":"create"});
         });
     });
 }
@@ -102,12 +103,12 @@ exports.getMessages = function(myDb, myActivityId, callback) {
         messageCursor.toArray(function(err, docArr){
             for(doc in docArr) {
                 messages.push({"userid": "dummy", "message":docArr[doc].message});
-                //console.log(messages);
-                //console.log({"message":docArr[doc].message});
+                console.log(messages);
+                console.log({"message":docArr[doc].message});
                 //console.log("iteration ", doc);
             }
             //console.log(docArr);
-            //console.log(messages);
+            console.log(messages);
             //console.log("Response:"+response);
             callback(jsonRsp);
         });
@@ -115,12 +116,13 @@ exports.getMessages = function(myDb, myActivityId, callback) {
 }
 
 // Store the messages associated with an activity
-exports.createMessage = function(myDb, activityId, msg) {
+exports.createMessage = function(myDb, activityId, msg, callback) {
     console.log("@createMessages()"+activityId+" "+msg);
     var messageToAdd = {activity: activityId, message:msg};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('messages', function(err, collection) {
         collection.insert(messageToAdd, options, function(err, results) {
+            callback();
             console.log(results);
         });
     });

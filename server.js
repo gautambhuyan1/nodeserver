@@ -1,4 +1,4 @@
-//  OpenShift sample Node application
+
 var express = require('express'),
     app     = express(),
     lib     = require('body-parser'),
@@ -7,9 +7,26 @@ var express = require('express'),
 var db = null,
     dbDetails = new Object();
 
+
+app.set('port', (process.env.PORT || 5000));
+
+//app.use(express.static(__dirname + '/public'));
+
+// views is directory for all template files
+//app.set('views', __dirname + '/views');
+//app.set('view engine', 'ejs');
+
+//app.get('/', function(request, response) {
+//  response.render('pages/index');
+//});
+
+app.listen(app.get('port'), function() {
+  console.log('Aptivity is running on port', app.get('port'));
+});
+
 var initDb = function(callback) {
 //console.log("InitDB called"+mongoURL);
-  mongoURL = "mongodb://localhost/";
+  mongoURL = "mongodb://aptivity:aptivity123@ds119081.mlab.com:19081/activity";
   if (mongoURL == null) return;
 
   var mongodb = require('mongodb');
@@ -21,8 +38,8 @@ var initDb = function(callback) {
       return;
     }
 
-console.log("InitDB return"+conn);
-    db = conn.db("aptivity");
+//console.log("InitDB return"+conn);
+    db = conn.db("activity");
     console.log("initDb "+ db);
     dbDetails.databaseName = db.databaseName;
     //dbDetails.url = mongoURLLabel;
@@ -142,8 +159,11 @@ app.post('/activity', function(req, res) {
     if (!db) {
       initDb(function(err){});
     }
-    dbapp.createActivity(db, interest, activity, lat, lng);
-    res.json({done:true});
+    var response = function(data) {
+        res.json(data);
+    }
+    dbapp.createActivity(db, interest, activity, lat, lng, response);
+    //res.json({done:true});
 });
     
 app.post('/message', function(req, res) {
@@ -153,9 +173,13 @@ app.post('/message', function(req, res) {
     if (!db) {
       initDb(function(err){});
     }
-    dbapp.createMessage(db, activity, message);
-    
-    res.json({done:true});
+
+
+    var update_response = function() {
+        //Done
+    }
+
+    dbapp.createMessage(db, activity, message, update_response);
 });
     
 app.use(function(req, res, next) {
@@ -167,7 +191,7 @@ app.use(function(req, res, next) {
 });
 
 //app.listen(port, ip);
-app.listen(3030);
-//console.log('Server running on http://%s:%s', ip, port);
+//app.listen(app.get('port'));
+//console.log('Server running on http://%s', port);
 
 module.exports = app ;
