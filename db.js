@@ -52,7 +52,8 @@ exports.getActivities = function(myDb, myInterest, myLat, myLng, callback) {
  
            //query = {};
         if (myInterest == "all") {
-           query = {};
+           query = {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}};
+           //query = {};
         }
 
         console.log(query);
@@ -63,7 +64,8 @@ exports.getActivities = function(myDb, myInterest, myLat, myLng, callback) {
                 activities.push({interest:docArr[doc].interest,
                                  activityid:docArr[doc]._id,
                                  activity:docArr[doc].activity,
-                                 location:docArr[doc].location
+                                 location:docArr[doc].location,
+                                 date:docArr[doc].date
                                  });
                 //console.log("iteration ", doc);
             }
@@ -77,9 +79,9 @@ exports.getActivities = function(myDb, myInterest, myLat, myLng, callback) {
 }
 
 // Create a new activity - store interest, location and activity
-exports.createActivity = function(myDb, myInterest, myActivity, myLat, myLng, callback) {
+exports.createActivity = function(myDb, myInterest, myActivity, myLat, myLng, myDate, callback) {
     console.log("@createActivities() "+myInterest+" "+myActivity+" "+myLat+" "+myLng);
-    var activityToAdd = {interest:myInterest, activity: myActivity, location:[myLat, myLng]};
+    var activityToAdd = {interest:myInterest, activity: myActivity, date: myDate, location:[parseFloat(myLat), parseFloat(myLng)]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('activities', function(err, collection) {
         collection.insert(activityToAdd, options, function(err, results) {

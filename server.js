@@ -119,6 +119,7 @@ app.get('/activities/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
     var lng = req.params.lng;
     console.log("Activities", interest, lat, lng);
     var response = function(data) {
+        console.log("JSON response for ", interest);
         res.json(data);
     }
     if (!db) {
@@ -139,6 +140,7 @@ app.get('/messages/activity/:activity', function(req, res) {
     dbapp.getMessages(db, activity, response);
 });
     
+/*
 app.post('/interest', function(req, res) {
     var interest = req.body.interest;
     if (!db) {
@@ -149,26 +151,43 @@ app.post('/interest', function(req, res) {
     console.log({interest:interest});
     res.json({done:true});
 });
+*/
+
+app.post('/interest', function(req, res) {
+    var content = req.body;
+    var interest = content['interest'];
+    if (!db) {
+      initDb(function(err){});
+    }
+    console.log("Create Interest", interest);
+    dbapp.addInterest(db, interest);
+    console.log({interest:interest});
+    res.json({done:true});
+});
     
 app.post('/activity', function(req, res) {
-    var interest = req.body.interest,
-        lat = parseFloat(req.body.lat),
-        lng = parseFloat(req.body.lng),
-        activity = req.body.activity;
-    console.log({interest:interest, lat:lat, lng:lng});
+    var content = req.body;
+    var interest = content['interest'],
+        lat = content['lat'],
+        lng = content['lng'],
+        activity = content['activity'],
+        date = content['date'];
+    console.log({interest:interest, activity:activity, lat:lat, lng:lng, date:date});
     if (!db) {
       initDb(function(err){});
     }
     var response = function(data) {
         res.json(data);
     }
-    dbapp.createActivity(db, interest, activity, lat, lng, response);
+    dbapp.createActivity(db, interest, activity, lat, lng, date, response);
     //res.json({done:true});
 });
     
 app.post('/message', function(req, res) {
-    var activity = req.body.activity,
-        message = req.body.message;
+    var content = req.body;
+    var activity = req.body['activity'],
+        message = req.body['message'];
+
     console.log({activity:activity, message:message});
     if (!db) {
       initDb(function(err){});
