@@ -20,10 +20,12 @@ app.set('port', (process.env.PORT || 5000));
 //  response.render('pages/index');
 //});
 
+// ### listen port
 app.listen(app.get('port'), function() {
   console.log('Aptivity is running on port', app.get('port'));
 });
 
+// ### initDb
 var initDb = function(callback) {
 //console.log("InitDB called"+mongoURL);
   mongoURL = "mongodb://aptivity:aptivity123@ds119081.mlab.com:19081/activity";
@@ -45,15 +47,16 @@ var initDb = function(callback) {
     //dbDetails.url = mongoURLLabel;
     dbDetails.type = 'MongoDB';
 
-    db.createCollection("users", {strict: true});
-    db.createCollection("interests", {strict: true});
-    db.createCollection("activities", {strict: true});
-    db.createCollection("messages", {strict: true});
+    //db.createCollection("users", {strict: true});
+    //db.createCollection("interests", {strict: true});
+    //db.createCollection("activities", {strict: true});
+    //db.createCollection("messages", {strict: true});
 
     console.log('Connected to MongoDB at: %s', mongoURL);
   });
 };
 
+// ### generic get
 app.get('/', function (req, res) {
   // try to initialize the db on every request if it's not already
   // initialized.
@@ -72,6 +75,7 @@ app.get('/', function (req, res) {
   }
 });
 
+// ### pagecount
 app.get('/pagecount', function (req, res) {
   // try to initialize the db on every request if it's not already
   // initialized.
@@ -87,12 +91,13 @@ app.get('/pagecount', function (req, res) {
   }
 });
 
-// error handling
+// ### error handling
 app.use(function(err, req, res, next){
   console.error(err.stack);
   res.status(500).send('Something bad happened!');
 });
 
+// ### init DB
 initDb(function(err){
   console.log('Error connecting to Mongo. Message:\n'+err);
 });
@@ -100,6 +105,7 @@ initDb(function(err){
 app.use(lib.json());
 app.use(lib.urlencoded({extended:true}));
 
+// ### get interests
 app.get('/interests', function(req, res) {
     var response = function(data) {
         res.json(data);
@@ -113,11 +119,13 @@ app.get('/interests', function(req, res) {
     dbapp.getInterests(db, response);
 });
     
-app.get('/activities/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
+// ### get activities
+app.get('/activities/userid/:userid/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
     var interest = req.params.interest;
     var lat = req.params.lat;
     var lng = req.params.lng;
-    console.log("Activities", interest, lat, lng);
+    var userid = req.params.userid;
+    console.log("Activities", userid, interest, lat, lng);
     var response = function(data) {
         console.log("JSON response for ", interest);
         res.json(data);
@@ -125,9 +133,10 @@ app.get('/activities/interest/:interest/lat/:lat/lng/:lng', function(req, res) {
     if (!db) {
       initDb(function(err){});
     }
-    dbapp.getActivities(db, interest, lat, lng, response);
+    dbapp.getActivities(db, userid, interest, lat, lng, response);
 });
     
+// ### get messages on activity 
 app.get('/messages/activity/:activity', function(req, res) {
     var activity = req.params.activity;
     console.log("Messages", activity);
@@ -140,19 +149,23 @@ app.get('/messages/activity/:activity', function(req, res) {
     dbapp.getMessages(db, activity, response);
 });
     
-/*
-app.post('/interest', function(req, res) {
-    var interest = req.body.interest;
+// ### post new user
+app.post('/user', function(req, res) {
+    var content = req.body;
+    var username = content['username'],
+        imsi = content['imsi'];
+
     if (!db) {
       initDb(function(err){});
     }
-    console.log("Create Interest", interest);
-    dbapp.addInterest(db, interest);
-    console.log({interest:interest});
-    res.json({done:true});
+    var response = function(data) {
+        res.json(data);
+    }
+    console.log("Create user", username, imsi);
+    dbapp.createUser(db, username, imsi, response);
 });
-*/
 
+// ### post new interest (admin only)
 app.post('/interest', function(req, res) {
     var content = req.body;
     var interest = content['interest'];
@@ -165,30 +178,35 @@ app.post('/interest', function(req, res) {
     res.json({done:true});
 });
     
+// ### post new activity
 app.post('/activity', function(req, res) {
     var content = req.body;
     var interest = content['interest'],
+        username = content['username'],
+        userid = content['userid'],
         lat = content['lat'],
         lng = content['lng'],
         activity = content['activity'],
         date = content['date'];
-    console.log({interest:interest, activity:activity, lat:lat, lng:lng, date:date});
+    console.log({userid:userid, username:username, interest:interest, activity:activity, lat:lat, lng:lng, date:date});
     if (!db) {
       initDb(function(err){});
     }
     var response = function(data) {
         res.json(data);
     }
-    dbapp.createActivity(db, interest, activity, lat, lng, date, response);
-    //res.json({done:true});
+    dbapp.createActivity(db, userid, username, interest, activity, lat, lng, date, response);
 });
     
+// ### post new message
 app.post('/message', function(req, res) {
     var content = req.body;
     var activity = req.body['activity'],
+        username = content['username'],
+        userid = content['userid'],
         message = req.body['message'];
 
-    console.log({activity:activity, message:message});
+    console.log({userid:userid, username:username, activity:activity, message:message});
     if (!db) {
       initDb(function(err){});
     }
@@ -198,9 +216,10 @@ app.post('/message', function(req, res) {
        res.json({done:true});
     }
 
-    dbapp.createMessage(db, activity, message, update_response);
+    dbapp.createMessage(db, userid, username, activity, message, update_response);
 });
     
+// ### generic function
 app.use(function(req, res, next) {
     console.log("Unsupported function", req);
     //res.writeHead(200, {'Content-type' : 'text/html'});
