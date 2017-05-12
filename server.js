@@ -137,16 +137,16 @@ app.get('/activities/userid/:userid/interest/:interest/lat/:lat/lng/:lng', funct
 });
     
 // ### get messages on activity 
-app.get('/messages/activity/:activity', function(req, res) {
-    var activity = req.params.activity;
-    console.log("Messages", activity);
+app.get('/messages/activityid/:activityid', function(req, res) {
+    var activityid = req.params.activityid;
+    console.log("Messages", activityid);
     var response = function(data) {
         res.json(data);
     }
     if (!db) {
       initDb(function(err){});
     }
-    dbapp.getMessages(db, activity, response);
+    dbapp.getMessages(db, activityid, response);
 });
     
 // ### post new user
@@ -201,12 +201,12 @@ app.post('/activity', function(req, res) {
 // ### post new message
 app.post('/message', function(req, res) {
     var content = req.body;
-    var activity = req.body['activity'],
+    var activityid = req.body['activityid'],
         username = content['username'],
         userid = content['userid'],
         message = req.body['message'];
 
-    console.log({userid:userid, username:username, activity:activity, message:message});
+    console.log({userid:userid, username:username, activityid:activityid, message:message});
     if (!db) {
       initDb(function(err){});
     }
@@ -216,7 +216,7 @@ app.post('/message', function(req, res) {
        res.json({done:true});
     }
 
-    dbapp.createMessage(db, userid, username, activity, message, update_response);
+    dbapp.createMessage(db, userid, username, activityid, message, update_response);
 });
     
 // ### generic function

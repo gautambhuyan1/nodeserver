@@ -81,19 +81,32 @@ exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callbac
 }
 
 // ### Create a new user - store username, imsi
-exports.createUser = function(myDb, username, imsi, callback) {
-    console.log("@createUser() "+username+" "+imsi);
+exports.createUser = function(myDb, myusername, myimsi, callback) {
+    console.log("@createUser() "+myusername+" "+myimsi);
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
-    var userToAdd = {username: username, imsi: imsi, interests:[], activities:[], location:[]};
+    var jsonRsp = {"type":"user", "result":"FAIL", "resultcode":"EXISTS"};
+    var userToAdd = {username: myusername, imsi: myimsi, interests:[], activities:[], location:[]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('users', function(err, collection) {
-        collection.insert(userToAdd, options, function(err, results) {
-            console.log(results);
-                var jsonRsp = {"type":"user", "userdetail": {userid: userToAdd._id}}; 
-                //userdetail = {userid:userToAdd._id};
-            console.log(jsonRsp);
-            callback(jsonRsp);
+        var query = {$and:[{'username':{$eq:myusername}}, {'imsi':{$eq:myimsi}}]};
+        console.log("Query: " + query.tostring);
+        var userCursor = collection.findOne(query, function(error, result) {
+            console.log(result+"  "+error);
+            if (result != null) {
+                // There is already a user with same details. Return failure.
+                callback(jsonRsp);
+            }
+            else {
+                // No existing user with same credentials, add the new detail
+                collection.insert(userToAdd, options, function(err, results) {
+                    jsonRsp = {"type":"user", "result":"SUCCESS", "resultcode":"NONE", "userdetail": {userid: userToAdd._id}};
+                    //jsonRsp = {"type":"user", "userdetail": {userid: userToAdd._id}}; 
+                    //userdetail = {userid:userToAdd._id};
+                    console.log(jsonRsp);
+                    callback(jsonRsp);
+                });
+            }
         });
     });
 }
@@ -118,7 +131,7 @@ exports.getMessages = function(myDb, myActivityId, callback) {
     var messages = [];
     var jsonRsp = {"type":"messages", "activityid": myActivityId, "messages": messages}; 
     myDb.collection('messages', function(err, collection){
-        var query = {"activity": myActivityId};
+        var query = {"activityid": myActivityId};
  
         //console.log(query);
         var messageCursor = collection.find(query);
@@ -140,7 +153,7 @@ exports.getMessages = function(myDb, myActivityId, callback) {
 // ### Store the messages associated with an activity
 exports.createMessage = function(myDb, userid, username, activityId, msg, callback) {
     console.log("@createMessages()"+activityId+" "+msg);
-    var messageToAdd = {activity: activityId, userid:userid, username:username, message:msg};
+    var messageToAdd = {activityid: activityId, userid:userid, username:username, message:msg};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('messages', function(err, collection) {
         collection.insert(messageToAdd, options, function(err, results) {
