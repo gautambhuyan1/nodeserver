@@ -27,7 +27,6 @@ app.listen(app.get('port'), function() {
 
 // ### initDb
 var initDb = function(callback) {
-//console.log("InitDB called"+mongoURL);
   mongoURL = "mongodb://aptivity:aptivity123@ds119081.mlab.com:19081/activity";
   if (mongoURL == null) return;
 
@@ -40,7 +39,6 @@ var initDb = function(callback) {
       return;
     }
 
-//console.log("InitDB return"+conn);
     db = conn.db("activity");
     console.log("initDb "+ db);
     dbDetails.databaseName = db.databaseName;
@@ -112,7 +110,7 @@ app.get('/interests', function(req, res) {
     }
     initDb();
         
-    console.log("GetInterests"+db);
+    //console.log("GetInterests"+db);
     if (!db) {
       initDb(function(err){});
     }
@@ -125,9 +123,9 @@ app.get('/activities/userid/:userid/interest/:interest/lat/:lat/lng/:lng', funct
     var lat = req.params.lat;
     var lng = req.params.lng;
     var userid = req.params.userid;
-    console.log("Activities", userid, interest, lat, lng);
+    //console.log("Activities", userid, interest, lat, lng);
     var response = function(data) {
-        console.log("JSON response for ", interest);
+        //console.log("JSON response for ", interest);
         res.json(data);
     }
     if (!db) {
@@ -139,7 +137,7 @@ app.get('/activities/userid/:userid/interest/:interest/lat/:lat/lng/:lng', funct
 // ### get messages on activity 
 app.get('/messages/activityid/:activityid', function(req, res) {
     var activityid = req.params.activityid;
-    console.log("Messages", activityid);
+    //console.log("Messages", activityid);
     var response = function(data) {
         res.json(data);
     }
@@ -161,7 +159,7 @@ app.post('/user', function(req, res) {
     var response = function(data) {
         res.json(data);
     }
-    console.log("Create user", username, imsi);
+    //console.log("Create user", username, imsi);
     dbapp.createUser(db, username, imsi, response);
 });
 
@@ -172,9 +170,9 @@ app.post('/interest', function(req, res) {
     if (!db) {
       initDb(function(err){});
     }
-    console.log("Create Interest", interest);
+    //console.log("Create Interest", interest);
     dbapp.addInterest(db, interest);
-    console.log({interest:interest});
+    //console.log({interest:interest});
     res.json({done:true});
 });
     
@@ -188,7 +186,7 @@ app.post('/activity', function(req, res) {
         lng = content['lng'],
         activity = content['activity'],
         date = content['date'];
-    console.log({userid:userid, username:username, interest:interest, activity:activity, lat:lat, lng:lng, date:date});
+    //console.log({userid:userid, username:username, interest:interest, activity:activity, lat:lat, lng:lng, date:date});
     if (!db) {
       initDb(function(err){});
     }
@@ -206,7 +204,7 @@ app.post('/message', function(req, res) {
         userid = content['userid'],
         message = req.body['message'];
 
-    console.log({userid:userid, username:username, activityid:activityid, message:message});
+    //console.log({userid:userid, username:username, activityid:activityid, message:message});
     if (!db) {
       initDb(function(err){});
     }
@@ -221,7 +219,7 @@ app.post('/message', function(req, res) {
     
 // ### generic function
 app.use(function(req, res, next) {
-    console.log("Unsupported function", req);
+    //console.log("Unsupported function", req);
     //res.writeHead(200, {'Content-type' : 'text/html'});
     //res.end("");
     res.json({done:true});

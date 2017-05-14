@@ -4,22 +4,22 @@
 exports.getInterests = function(myDb, callback) {
     console.log("@getInterests()");
     var interests = [];
-    var jsonRsp = {"type":"interest", "interests": interests}; 
+    var count = 0;
+    var jsonRsp;
     myDb.collection('interests', function(err, collection){
         var interestCursor = collection.find();
         interestCursor.toArray(function(err, docArr){
             for(doc in docArr) {
+                count++;
                 interests.push({interestid:docArr[doc]._id,
                                 interest:docArr[doc].interest});
-                console.log("iteration ", doc);
             }
-            console.log(docArr);
+            jsonRsp = {"type":"interestget","result":"SUCCESS","resultcode":"NONE","count":count, "interests": interests}; 
             console.log(jsonRsp);
             callback(jsonRsp);
         });
 
     });
-    console.log("Printing interests:" +interests);
 }
 
 // ### Add a new interest - Admin only
@@ -38,15 +38,12 @@ exports.addInterest = function(myDb, myInterest) {
 
 // ### Get activities with certain interest and within 100 kms of location
 exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callback) {
-    //console.log("@getActivities() "+userid+" "+ myInterest + " " + myPhone+ " " + myLat + " " + myLng);
-    console.log("@getActivities()");
-    //console.log(req);
+    console.log("@getActivities() "+userid+" "+ myInterest + " "+ myLat + " " + myLng);
     var activities = [];
-    var jsonRsp = {"type":"activity", "activities": activities}; 
-    console.log("interest: "+myInterest+" lat:"+myLat+" lng:"+myLng);
+    var count = 0;
+    var jsonRsp;
     myDb.collection('activities', function(err, collection){
         //var query1 = [{lat:{$eq: parseInt(myLat)}}];
-        //console.log(query1);
    
         var query = {$and:[{'interest':{$eq:myInterest}}, {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}}]};
  
@@ -56,11 +53,12 @@ exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callbac
            //query = {};
         }
 
-        console.log(query);
+        //console.log(query);
         collection.ensureIndex({location:'2d'});
         var activityCursor = collection.find(query);
         activityCursor.toArray(function(err, docArr){
             for(doc in docArr) {
+                count++;
                 activities.push({interest:docArr[doc].interest,
                                  activityid:docArr[doc]._id,
                                  activity:docArr[doc].activity,
@@ -69,15 +67,13 @@ exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callbac
                                  location:docArr[doc].location,
                                  date:docArr[doc].date
                                  });
-                //console.log("iteration ", doc);
             }
-            //console.log(docArr);
+            jsonRsp = {"type":"activityget","result":"SUCCESS","resultcode":"NONE", "count": count, "activities": activities}; 
             console.log(jsonRsp);
             callback(jsonRsp);
         });
 
     });
-    //console.log(" printing interests:" +interests);
 }
 
 // ### Create a new user - store username, imsi
@@ -90,9 +86,8 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('users', function(err, collection) {
         var query = {$and:[{'username':{$eq:myusername}}, {'imsi':{$eq:myimsi}}]};
-        console.log("Query: " + query.tostring);
+        //console.log("Query: " + query.tostring);
         var userCursor = collection.findOne(query, function(error, result) {
-            console.log(result+"  "+error);
             if (result != null) {
                 // There is already a user with same details. Return failure.
                 callback(jsonRsp);
@@ -100,7 +95,7 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
             else {
                 // No existing user with same credentials, add the new detail
                 collection.insert(userToAdd, options, function(err, results) {
-                    jsonRsp = {"type":"user", "result":"SUCCESS", "resultcode":"NONE", "userdetail": {userid: userToAdd._id}};
+                    jsonRsp = {"type":"userpost", "result":"SUCCESS", "resultcode":"NONE", "userdetail": {userid: userToAdd._id}};
                     //jsonRsp = {"type":"user", "userdetail": {userid: userToAdd._id}}; 
                     //userdetail = {userid:userToAdd._id};
                     console.log(jsonRsp);
@@ -113,13 +108,13 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
 
 // ### Create a new activity - store interest, location and activity
 exports.createActivity = function(myDb, userid, username, myInterest, myActivity, myLat, myLng, myDate, callback) {
-    console.log("@createActivities() "+myInterest+" "+myActivity+" "+myLat+" "+myLng);
+    console.log("@createActivities() "userid+" "+username+" "+myInterest+" "+myActivity+" "+myLat+" "+myLng+" "+myDate);
     var activityToAdd = {userid: userid, username: username, interest:myInterest, activity: myActivity, date: myDate, location:[parseFloat(myLat), parseFloat(myLng)]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('activities', function(err, collection) {
         collection.insert(activityToAdd, options, function(err, results) {
-            console.log(results);
-            callback({"type":"create"});
+            var jsonRsp = {"type":"activitypost","result":"SUCCESS","resultcode":"COMPLETE"};
+            callback(jsonRsp);
         });
     });
 }
@@ -129,22 +124,18 @@ exports.getMessages = function(myDb, myActivityId, callback) {
     console.log("@getMessages()"+myActivityId);
     var response;
     var messages = [];
-    var jsonRsp = {"type":"messages", "activityid": myActivityId, "messages": messages}; 
+    var count = 0;
     myDb.collection('messages', function(err, collection){
         var query = {"activityid": myActivityId};
  
-        //console.log(query);
         var messageCursor = collection.find(query);
         messageCursor.toArray(function(err, docArr){
             for(doc in docArr) {
+                count++;
                 messages.push({"username": docArr[doc].username, "message":docArr[doc].message});
-                console.log(messages);
-                console.log({"message":docArr[doc].message});
-                //console.log("iteration ", doc);
             }
-            //console.log(docArr);
-            console.log(messages);
-            //console.log("Response:"+response);
+            var jsonRsp = {"type":"messageget", "result":"SUCCESS","resultcode":"NONE","count":count, "activityid": myActivityId, "messages": messages}; 
+            console.log(jsonRsp);
             callback(jsonRsp);
         });
     });
@@ -152,13 +143,14 @@ exports.getMessages = function(myDb, myActivityId, callback) {
 
 // ### Store the messages associated with an activity
 exports.createMessage = function(myDb, userid, username, activityId, msg, callback) {
-    console.log("@createMessages()"+activityId+" "+msg);
+    console.log("@createMessages()"+userid+" "+username+" "+activityId+" "+msg);
     var messageToAdd = {activityid: activityId, userid:userid, username:username, message:msg};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('messages', function(err, collection) {
         collection.insert(messageToAdd, options, function(err, results) {
-            callback();
-            console.log(results);
+            var jsonRsp = {"type":"messagepost","result":"SUCCESS","resultcode":"COMPLETE"}
+            console.log(jsonRsp);
+            callback(jsonRsp);
         });
     });
 }
