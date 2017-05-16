@@ -1,4 +1,6 @@
 // real database and geospacial search
+var    mongo   = require("mongodb");
+//var bson = require('bson').BSONPure;
 
 // ### Get a list of valid interests
 exports.getInterests = function(myDb, callback) {
@@ -15,6 +17,49 @@ exports.getInterests = function(myDb, callback) {
                                 interest:docArr[doc].interest});
             }
             jsonRsp = {"type":"interestget","result":"SUCCESS","resultcode":"NONE","count":count, "interests": interests}; 
+            console.log(jsonRsp);
+            callback(jsonRsp);
+        });
+
+    });
+}
+
+// ### Get a list of valid interests for a specific user
+exports.getUserInterests = function(myDb, userid, callback) {
+    console.log("@getUserInterests() ", userid);
+    var interests = [];
+    var count = 0;
+    var jsonRsp;
+    myDb.collection('user', function(err, collection){
+        var interestCursor = collection.find();
+        interestCursor.toArray(function(err, docArr){
+            for(doc in docArr) {
+                count++;
+                interests.push({interestid:docArr[doc]._id,
+                                interest:docArr[doc].interest});
+            }
+            jsonRsp = {"type":"userinterestget","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "interests": interests}; 
+            console.log(jsonRsp);
+            callback(jsonRsp);
+        });
+
+    });
+}
+
+// ### Add a list of valid interests to a given user
+exports.addUserInterests = function(myDb, userid, nbrInterests, userInterests, callback) {
+    console.log("@getUserInterests() ", userid);
+    var count = 0;
+    var interests = [];
+    var jsonRsp = {"type":"userinterestspost","result":"FAIL","resultcode":"NOTFOUND"};
+    //var query = {{'_id':userid}, {$set:{'interests':userInterests}}};
+    var oid = mongo.ObjectID(userid);
+    console.log("OID ", oid);
+    myDb.collection('user', function(err, collection){
+        var userCursor = collection.update({'_id':oid}, {$set:{'interests':userInterests}}, function(error, result) {
+            if (!error) {
+                jsonRsp = {"type":"userinterestspost","result":"SUCCESS","resultcode":"NONE"};
+            }
             console.log(jsonRsp);
             callback(jsonRsp);
         });
@@ -41,11 +86,19 @@ exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callbac
     console.log("@getActivities() "+userid+" "+ myInterest + " "+ myLat + " " + myLng);
     var activities = [];
     var count = 0;
+    var interestList = JSON.parse(myInterest);
     var jsonRsp;
     myDb.collection('activities', function(err, collection){
         //var query1 = [{lat:{$eq: parseInt(myLat)}}];
    
-        var query = {$and:[{'interest':{$eq:myInterest}}, {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}}]};
+        var oredInterest = [];
+        for (interest in interestList) {
+            oredInterest.push({'interest':{$eq:interestList[interest]}}); 
+        }
+        var query = {$and:[{$or:oredInterest}, {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}}]};
+        console.log("Query: ",JSON.stringify(query));
+                      //{"$and":[{"$or":[[{"interest":{"$eq":"cricket"}},{"interest":{"$eq":"tennis"}}]]},{"location":{"$near":[40,-75],"$maxDistance":1}}]}
+        //var query = {$and:[{'interest':{$eq:myInterest}}, {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}}]};
  
            //query = {};
         if (myInterest == "all") {
@@ -108,7 +161,7 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
 
 // ### Create a new activity - store interest, location and activity
 exports.createActivity = function(myDb, userid, username, myInterest, myActivity, myLat, myLng, myDate, callback) {
-    console.log("@createActivities() "userid+" "+username+" "+myInterest+" "+myActivity+" "+myLat+" "+myLng+" "+myDate);
+    console.log("@createActivities() "+userid+" "+username+" "+myInterest+" "+myActivity+" "+myLat+" "+myLng+" "+myDate);
     var activityToAdd = {userid: userid, username: username, interest:myInterest, activity: myActivity, date: myDate, location:[parseFloat(myLat), parseFloat(myLng)]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('activities', function(err, collection) {
@@ -132,7 +185,7 @@ exports.getMessages = function(myDb, myActivityId, callback) {
         messageCursor.toArray(function(err, docArr){
             for(doc in docArr) {
                 count++;
-                messages.push({"username": docArr[doc].username, "message":docArr[doc].message});
+                messages.push({"username": docArr[doc].username, "messageid":docArr[doc]._id, "message":docArr[doc].message});
             }
             var jsonRsp = {"type":"messageget", "result":"SUCCESS","resultcode":"NONE","count":count, "activityid": myActivityId, "messages": messages}; 
             console.log(jsonRsp);

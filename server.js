@@ -2,7 +2,8 @@
 var express = require('express'),
     app     = express(),
     lib     = require('body-parser'),
-    dbapp   = require('./db.js');
+    dbapp   = require('./db.js'),
+    mongo   = require("mongodb").Objectd;
     
 var db = null,
     dbDetails = new Object();
@@ -104,7 +105,20 @@ app.use(lib.json());
 app.use(lib.urlencoded({extended:true}));
 
 // ### get interests
+app.get('/values/:values', function(req, res) {
+    var mylist = JSON.parse(req.params.values);
+    
+    console.log("Values = ", mylist);
+    for (item in mylist) {
+        //console.log(mylist);
+        console.log(mylist[item]);
+    }
+
+});
+
+// ### get interests
 app.get('/interests', function(req, res) {
+
     var response = function(data) {
         res.json(data);
     }
@@ -147,6 +161,19 @@ app.get('/messages/activityid/:activityid', function(req, res) {
     dbapp.getMessages(db, activityid, response);
 });
     
+// ### get messages on activity 
+app.get('/userinterests/userid/:userid', function(req, res) {
+    var userid = req.params.userid;
+    //console.log("Userinterests", userid);
+    var response = function(data) {
+        res.json(data);
+    }
+    if (!db) {
+      initDb(function(err){});
+    }
+    dbapp.getUserInterests(db, userid, response);
+});
+
 // ### post new user
 app.post('/user', function(req, res) {
     var content = req.body;
@@ -163,6 +190,24 @@ app.post('/user', function(req, res) {
     dbapp.createUser(db, username, imsi, response);
 });
 
+// ### post new interest for a given user
+app.post('/userinterests', function(req, res) {
+    var content = req.body;
+    var userid = content['userid'];
+    var count = content['count'];
+    var interests = content['interests'];
+
+    if (!db) {
+      initDb(function(err){});
+    }
+    var response = function(data) {
+        res.json(data);
+    }
+    console.log("Create user Interest", userid, " ", count, " ", interests);
+    dbapp.addUserInterests(db, userid, count, interests, response);
+    //console.log({interest:interest});
+});
+    
 // ### post new interest (admin only)
 app.post('/interest', function(req, res) {
     var content = req.body;
@@ -170,10 +215,12 @@ app.post('/interest', function(req, res) {
     if (!db) {
       initDb(function(err){});
     }
+    var response = function(data) {
+        res.json(data);
+    }
     //console.log("Create Interest", interest);
     dbapp.addInterest(db, interest);
     //console.log({interest:interest});
-    res.json({done:true});
 });
     
 // ### post new activity
