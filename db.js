@@ -14,7 +14,8 @@ exports.getInterests = function(myDb, callback) {
             for(doc in docArr) {
                 count++;
                 interests.push({interestid:docArr[doc]._id,
-                                interest:docArr[doc].interest});
+                                interest:docArr[doc].interest,
+                                subinterests:docArr[doc].subinterests});
             }
             jsonRsp = {"type":"interestget","result":"SUCCESS","resultcode":"NONE","count":count, "interests": interests}; 
             console.log(jsonRsp);
@@ -30,13 +31,15 @@ exports.getUserInterests = function(myDb, userid, callback) {
     var interests = [];
     var count = 0;
     var jsonRsp;
-    myDb.collection('user', function(err, collection){
-        var interestCursor = collection.find();
+    var oid = mongo.ObjectID(userid);
+    myDb.collection('users', function(err, collection){
+        var interestCursor = collection.find({"_id":oid});
         interestCursor.toArray(function(err, docArr){
             for(doc in docArr) {
                 count++;
+                console.log("Interests ", docArr[doc].interests);
                 interests.push({interestid:docArr[doc]._id,
-                                interest:docArr[doc].interest});
+                                interest:docArr[doc].interests});
             }
             jsonRsp = {"type":"userinterestget","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "interests": interests}; 
             console.log(jsonRsp);
@@ -53,10 +56,11 @@ exports.addUserInterests = function(myDb, userid, nbrInterests, userInterests, c
     var interests = [];
     var jsonRsp = {"type":"userinterestspost","result":"FAIL","resultcode":"NOTFOUND"};
     //var query = {{'_id':userid}, {$set:{'interests':userInterests}}};
+    //var oid = userid;
     var oid = mongo.ObjectID(userid);
-    console.log("OID ", oid);
-    myDb.collection('user', function(err, collection){
-        var userCursor = collection.update({'_id':oid}, {$set:{'interests':userInterests}}, function(error, result) {
+    //console.log("OID ", oid);
+    myDb.collection('users', function(err, collection){
+        var userCursor = collection.update({"_id":oid}, {$set:{"interests":userInterests}}, function(error, result) {
             if (!error) {
                 jsonRsp = {"type":"userinterestspost","result":"SUCCESS","resultcode":"NONE"};
             }

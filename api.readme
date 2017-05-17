@@ -1,0 +1,109 @@
+API Descriptions:
+
+api handle: https://gautambhuyan.herokuapp.com
+
+User
+----
+POST : /user
+Description: Create a new user with a name and a phone number. Returns a json object with the ID of the newly created user.
+API : {"username":<username>, "imsi":<imsi>}
+API input example:
+POST body
+{"username":"Aloke Nandy", "imsi":"+15129984612"}
+API output :
+{"type":"userpost","result":"SUCCESS","resultcode":"NONE","userdetail":{"userid":"5915fbed64d8a932320fc447"}}
+or
+{"type":"userpost","result":"FAIL","resultcode":"EXISTS"}
+
+Interests
+---------
+GET : /interests
+Description: Api handle to get the list of interests. Returns a json object with a list of interests.
+API : https://gautambhuyan.herokuapp.com/interests
+API output :
+{"type":"interestget","result":"SUCCESS","resultcode":"NONE","count":5,"interests":[{"interestid":"58ffcc963d51680004391f37","interest":"all"},{"interestid":"58ffccfd3d51680004391f38","interest":"cricket"},{"interestid":"58ffcd013d51680004391f39","interest":"soccer"},{"interestid":"58ffcd043d51680004391f3a","interest":"tennis"},{"interestid":"59127dc01cbf452849d3cc48","interest":"hiking"}]}
+
+GET : /userinterests/userid/:userid
+Description: Api handle to get the list of interests for a user. Returns a json object with a list of interests for a given user.
+API : https://gautambhuyan.herokuapp.com/userinterests
+API output :
+{ type: 'userinterestget',
+  result: 'SUCCESS',
+  resultcode: 'NONE',
+  userid: '5915f8316479e432047efc6b',
+  count: 1,
+  interests: [ { interestid: 5915f8316479e432047efc6b, interest: ['cricket','soccer'] } ] }
+
+POST : /userinterests
+Description: Api handle to get the list of interests for a user. Returns a json object with a list of interests for a given user.
+API : {"userid":<userid>, "count":<count>, "interests":[<interest1>, <interest2>...]}
+API output :
+{"type":"userinterestspost","result":"SUCCESS","resultcode":"NONE"}
+{"type":"userinterestspost","result":"FAIL","resultcode":"NOTFOUND"}
+
+Activities
+----------
+GET : /activities/userid/:userid/interest/:[interest]/lat/:lat/lng/:lng
+Description: Api handle to get the list of activities with a certain type of interest at a certain latitute and longitude. Returns a json object with a list of activities
+API : https://gautambhuyan.herokuapp.com/activities/userid/5915258d43ef5b00041219cf/interest/["hiking","cricket","tennis"]/lat/39.9771836/lng/-74.8771652
+API output :
+{ type: 'activityget',
+  result: 'SUCCESS',
+  resultcode: 'NONE',
+  count: 3,
+  activities: 
+   [ { interest: 'tennis',
+       activityid: 59137cc0d55f652bf5511a68,
+       activity: 'game of tennis',
+       userid: 'thisisme',
+       username: 'Aptivity user',
+       location: [Object],
+       date: '4:12:2017' },
+     { interest: 'cricket',
+       activityid: 5917b9b49a8c8f00049a1333,
+       activity: 'tomorrow morning',
+       userid: '5917b92a9a8c8f00049a1331',
+       username: 'Aptivity user',
+       location: [Object],
+       date: '4:15:2017' },
+     { interest: 'hiking',
+       activityid: 59138b45d6a8062c6f6d35d1,
+       activity: 'abcd',
+       userid: '59138affd6a8062c6f6d35d0',
+       username: 'Aptivity user',
+       location: [Object],
+       date: '4:12:2017' } ] }
+{"type":"activityget","result":"FAIL","resultcode":"NOTFOUND"}
+
+POST : /activity
+Description: Api handle to create a new activity. 
+API : {"interest":<interest>, "username":<username>, "userid":<userid>, "lat":<lat>, "lng":<lng>, "activity":<activity>, "date":<date>}
+API input example:
+POST body
+{"username":"Gautam", "userid":"5913739112839c2ba4a8fea8", "interest":"hiking", "activity":"New game", "lat":1, "lng":1, "date":"23:2:3"}
+API output :
+{"type":"activitypost","result":"SUCCESS","resultcode":"COMPLETE"}
+{"type":"activitypost","result":"FAIL","resultcode":"NOSPACE"}
+
+Messages
+--------
+GET : /messages/activityid/:activityid
+Description: Api handle to get all the messages associated with a certain activity id. Returns a json object with a list of messages.
+API : http://10.0.0.4:5000/messages/activityid/5915179e29e1ab0004c292a5
+API output :
+{ type: 'messageget',
+  result: 'SUCCESS',
+  resultcode: 'NONE',
+  count: 1,
+  activityid: '59137cc0d55f652bf5511a68',
+  messages: 
+   [ { username: 'Aptivity user',
+       messageid: 591874b00258800004a359a3,
+       message: 'new comment' } ] }
+
+POST : /message
+Description: Api handle to create a new message associated with an activity ID
+API : {"activityid":<activityid>, "username":<username>, "userid":<userid>, "message":<message>}
+API output :
+{"type":"messagepost","result":"SUCCESS","resultcode":"COMPLETE"}
+{"type":"messagepost","result":"FAIL","resultcode":"NOSPACE"}

@@ -105,18 +105,6 @@ app.use(lib.json());
 app.use(lib.urlencoded({extended:true}));
 
 // ### get interests
-app.get('/values/:values', function(req, res) {
-    var mylist = JSON.parse(req.params.values);
-    
-    console.log("Values = ", mylist);
-    for (item in mylist) {
-        //console.log(mylist);
-        console.log(mylist[item]);
-    }
-
-});
-
-// ### get interests
 app.get('/interests', function(req, res) {
 
     var response = function(data) {
