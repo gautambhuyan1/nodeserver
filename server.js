@@ -149,7 +149,20 @@ app.get('/messages/activityid/:activityid', function(req, res) {
     dbapp.getMessages(db, activityid, response);
 });
     
-// ### get messages on activity 
+// ### get user activities
+app.get('/useractivities/userid/:userid', function(req, res) {
+    var userid = req.params.userid;
+    //console.log("Userinterests", userid);
+    var response = function(data) {
+        res.json(data);
+    }
+    if (!db) {
+      initDb(function(err){});
+    }
+    dbapp.getUserActivities(db, userid, response);
+});
+
+// ### get user interests
 app.get('/userinterests/userid/:userid', function(req, res) {
     var userid = req.params.userid;
     //console.log("Userinterests", userid);
@@ -176,6 +189,23 @@ app.post('/user', function(req, res) {
     }
     //console.log("Create user", username, imsi);
     dbapp.createUser(db, username, imsi, response);
+});
+
+// ### post new user
+app.post('/otpconfirm', function(req, res) {
+    var content = req.body;
+    var username = content['username'],
+        imsi = content['imsi'],
+        otp = content['otp'];
+
+    if (!db) {
+      initDb(function(err){});
+    }
+    var response = function(data) {
+        res.json(data);
+    }
+    //console.log("Create user", username, imsi);
+    dbapp.confirmOtp(db, username, imsi, otp, response);
 });
 
 // ### post new interest for a given user
@@ -211,8 +241,25 @@ app.post('/interest', function(req, res) {
     //console.log({interest:interest});
 });
     
+// ### post like activity
+app.post('/likeactivity', function(req, res) {
+    var content = req.body;
+    var username = content['username'],
+        userid = content['userid'],
+        activityid = content['activityid'];
+
+    //console.log({userid:userid, username:username, activityid:activityid});
+    if (!db) {
+      initDb(function(err){});
+    }
+    var response = function(data) {
+        res.json(data);
+    }
+    dbapp.likeActivity(db, userid, username, activityid, response);
+});
+    
 // ### post new activity
-app.post('/activity', function(req, res) {
+app.post('/createnewactivity', function(req, res) {
     var content = req.body;
     var interest = content['interest'],
         username = content['username'],
@@ -232,7 +279,7 @@ app.post('/activity', function(req, res) {
 });
     
 // ### post new message
-app.post('/message', function(req, res) {
+app.post('/createnewmessage', function(req, res) {
     var content = req.body;
     var activityid = req.body['activityid'],
         username = content['username'],
@@ -254,7 +301,7 @@ app.post('/message', function(req, res) {
     
 // ### generic function
 app.use(function(req, res, next) {
-    //console.log("Unsupported function", req);
+    console.log("Unsupported function", req);
     //res.writeHead(200, {'Content-type' : 'text/html'});
     //res.end("");
     res.json({done:true});

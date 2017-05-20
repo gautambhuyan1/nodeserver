@@ -71,6 +71,61 @@ exports.addUserInterests = function(myDb, userid, nbrInterests, userInterests, c
     });
 }
 
+// ### Get a list of valid activities for a specific user
+exports.getUserActivities = function(myDb, userid, callback) {
+    console.log("@getUserActivities() ", userid);
+    var myActivities = [];
+    var jsonRsp;
+    var oid = mongo.ObjectID(userid);
+    
+    var response = function(count, activities) {
+        jsonRsp = {"type":"userinterestget","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "activities": activities}; 
+        console.log(jsonRsp);
+        callback(jsonRsp);
+    }
+
+    myDb.collection('users', function(err, collection){
+        var interestCursor = collection.find({"_id":oid});
+        interestCursor.toArray(function(err, docArr){
+            for(doc in docArr) {
+                console.log("Activities ", docArr[doc].activities);
+                myactivities = docArr[doc].activities;
+                //activities.push({interestid:docArr[doc]._id,
+                                //interest:docArr[doc].activities});
+            }
+            console.log("Activities ", myactivities);
+            getActivitiesWithIds(myDb, userid, myactivities, response);
+        });
+
+    });
+}
+
+// ### Add a list of valid interests to a given user
+exports.likeActivity = function(myDb, userid, username, activityid, callback) {
+    console.log("@likeActivity() ", userid);
+    var count = 0;
+    var activities;// = [activityid];
+    var jsonRsp = {"type":"likeactivity","result":"FAIL","resultcode":"NOTFOUND"};
+    //var query = {{'_id':userid}, {$set:{'interests':userInterests}}};
+    //var oid = userid;
+    var oid = mongo.ObjectID(userid);
+    //console.log("OID ", oid);
+    myDb.collection('users', function(err, collection) {
+        var userCursor = collection.find({"_id":oid});
+        userCursor.toArray(function(err, docArr){
+            activities = docArr[0].activities;
+            activities.push(activityid);
+            var userCursor = collection.update({"_id":oid}, {$set:{"activities":activities}}, function(error, result) {
+               if (!error) {
+                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+               }
+               console.log(jsonRsp);
+               callback(jsonRsp);
+           });
+        });
+    });
+}
+
 // ### Add a new interest - Admin only
 exports.addInterest = function(myDb, myInterest) {
     console.log("@addInterests() "+ myInterest);
@@ -82,6 +137,40 @@ exports.addInterest = function(myDb, myInterest) {
         collection.insert(interestToAdd, options, function(err, results) {
             console.log(results);
         });
+    });
+}
+
+// ### Get activities with certain activity IDs
+getActivitiesWithIds = function(myDb, userid, activityIdList, callback) {
+    var activities = [];
+    var count = 0;
+    var jsonRsp;
+    console.log("@getActivitiesWithIds: ", activityIdList);
+    myDb.collection('activities', function(err, collection){
+   
+        for (act = 0; act<activityIdList.length; act++) {
+            var query = {"_id":mongo.ObjectID( activityIdList[act])};
+ 
+            var activityCursor = collection.find(query);
+            activityCursor.toArray(function(err, docArr){
+                for(doc in docArr) {
+                    count++;
+                    activities.push({interest:docArr[doc].interest,
+                                     activityid:docArr[doc]._id,
+                                     activity:docArr[doc].activity,
+                                     userid:docArr[doc].userid,
+                                     username:docArr[doc].username,
+                                     location:docArr[doc].location,
+                                     date:docArr[doc].date
+                                     });
+                }
+                //console.log("End: ", act, count, activityIdList.length, (activityIdList.length - 1));
+                if (count == (activityIdList.length)) {
+                    console.log(JSON.stringify(activities));
+                    callback(count, activities);
+                }
+            });
+        }
     });
 }
 
@@ -135,6 +224,35 @@ exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callbac
 
 // ### Create a new user - store username, imsi
 exports.createUser = function(myDb, myusername, myimsi, callback) {
+    console.log("@createUser() "+myusername+" "+myimsi);
+    //var userdetail = {};
+    //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
+    var jsonRsp = {"type":"user", "result":"FAIL", "resultcode":"EXISTS"};
+    var userToAdd = {username: myusername, imsi: myimsi, interests:[], activities:[], location:[]};
+    var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
+    myDb.collection('users', function(err, collection) {
+        var query = {$and:[{'username':{$eq:myusername}}, {'imsi':{$eq:myimsi}}]};
+        //console.log("Query: " + query.tostring);
+        var userCursor = collection.findOne(query, function(error, result) {
+            if (result != null) {
+                // There is already a user with same details. Return failure.
+                callback(jsonRsp);
+            }
+            else {
+                // No existing user with same credentials, add the new detail
+                collection.insert(userToAdd, options, function(err, results) {
+                    jsonRsp = {"type":"userpost", "result":"SUCCESS", "resultcode":"NONE"};
+                    //userdetail = {userid:userToAdd._id};
+                    console.log(jsonRsp);
+                    callback(jsonRsp);
+                });
+            }
+        });
+    });
+}
+
+// ### Create a new user - store username, imsi
+exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
     console.log("@createUser() "+myusername+" "+myimsi);
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
