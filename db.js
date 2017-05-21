@@ -41,7 +41,7 @@ exports.getUserInterests = function(myDb, userid, callback) {
                 interests.push({interestid:docArr[doc]._id,
                                 interest:docArr[doc].interests});
             }
-            jsonRsp = {"type":"userinterestget","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "interests": interests}; 
+            jsonRsp = {"type":"userinterest","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "interests": interests}; 
             console.log(jsonRsp);
             callback(jsonRsp);
         });
@@ -79,7 +79,7 @@ exports.getUserActivities = function(myDb, userid, callback) {
     var oid = mongo.ObjectID(userid);
     
     var response = function(count, activities) {
-        jsonRsp = {"type":"userinterestget","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "activities": activities}; 
+        jsonRsp = {"type":"useractivities","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "activities": activities}; 
         console.log(jsonRsp);
         callback(jsonRsp);
     }
