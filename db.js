@@ -115,7 +115,24 @@ exports.likeActivity = function(myDb, userid, username, activityid, callback) {
         userCursor.toArray(function(err, docArr){
             activities = docArr[0].activities;
             activities.push(activityid);
-            var userCursor = collection.update({"_id":oid}, {$set:{"activities":activities}}, function(error, result) {
+            var userCursorNew = collection.update({"_id":oid}, {$set:{"activities":activities}}, function(error, result) {
+               if (!error) {
+                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+               }
+               //console.log(jsonRsp);
+               //callback(jsonRsp);
+           });
+        });
+    });
+    var activityOid = mongo.ObjectID(activityid);
+    myDb.collection('activities', function(err, collection) {
+        var activityCursor = collection.find({"_id":activityOid});
+        activityCursor.toArray(function(err, docArr){
+            var likes = docArr[0].likes;
+            var likelist = docArr[0].likelist;
+            likelist.push({"username":username, "userid":userid});
+            likes++;
+            var activityLink = collection.update({"_id":activityOid}, {$set:{"likes":likes, "likelist":likelist}}, function(error, result) {
                if (!error) {
                    jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
                }
@@ -175,12 +192,13 @@ getActivitiesWithIds = function(myDb, userid, activityIdList, callback) {
 }
 
 // ### Get activities with certain interest and within 100 kms of location
-exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callback) {
-    console.log("@getActivities() "+userid+" "+ myInterest + " "+ myLat + " " + myLng);
+exports.getActivities = function(myDb, userid, myInterestRaw, myLat, myLng, callback) {
     var activities = [];
+    var myInterest = myInterestRaw.toString('utf-8').trim();
     var count = 0;
     var interestList = JSON.parse(myInterest);
     var jsonRsp;
+    console.log("@getActivities() "+userid+" "+ myInterest + " "+ myLat + " " + myLng);
     myDb.collection('activities', function(err, collection){
         //var query1 = [{lat:{$eq: parseInt(myLat)}}];
    
@@ -194,7 +212,7 @@ exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callbac
         //var query = {$and:[{'interest':{$eq:myInterest}}, {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}}]};
  
            //query = {};
-        if (myInterest == "all") {
+        if (myInterest == "[\"all\"]") {
            query = {'location':{$near: [parseFloat(myLat), parseFloat(myLng)], $maxDistance:1}};
            //query = {};
         }
@@ -211,11 +229,16 @@ exports.getActivities = function(myDb, userid, myInterest, myLat, myLng, callbac
                                  userid:docArr[doc].userid,
                                  username:docArr[doc].username,
                                  location:docArr[doc].location,
-                                 date:docArr[doc].date
+                                 date:docArr[doc].date,
+                                 likes:docArr[doc].likes,
+                                 shares:docArr[doc].shares,
+                                 likelist:docArr[doc].likelist,
+                                 sharelist:docArr[doc].sharelist
                                  });
             }
             jsonRsp = {"type":"activityget","result":"SUCCESS","resultcode":"NONE", "count": count, "activities": activities}; 
-            console.log(jsonRsp);
+            //console.log(jsonRsp.stringify());
+            console.log(JSON.stringify(jsonRsp));
             callback(jsonRsp);
         });
 
@@ -256,7 +279,7 @@ exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
     console.log("@createUser() "+myusername+" "+myimsi);
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
-    var jsonRsp = {"type":"user", "result":"FAIL", "resultcode":"EXISTS"};
+    var jsonRsp = {"type":"user", "result":"FAIL", "resultcode":"INCORRECT_OTP"};
     var userToAdd = {username: myusername, imsi: myimsi, interests:[], activities:[], location:[]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('users', function(err, collection) {
@@ -284,7 +307,7 @@ exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
 // ### Create a new activity - store interest, location and activity
 exports.createActivity = function(myDb, userid, username, myInterest, myActivity, myLat, myLng, myDate, callback) {
     console.log("@createActivities() "+userid+" "+username+" "+myInterest+" "+myActivity+" "+myLat+" "+myLng+" "+myDate);
-    var activityToAdd = {userid: userid, username: username, interest:myInterest, activity: myActivity, date: myDate, location:[parseFloat(myLat), parseFloat(myLng)]};
+    var activityToAdd = {userid: userid, username: username, interest:myInterest, likes:0, shares:0, likelist:[], sharelist:[], activity: myActivity, date: myDate, location:[parseFloat(myLat), parseFloat(myLng)]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('activities', function(err, collection) {
         collection.insert(activityToAdd, options, function(err, results) {

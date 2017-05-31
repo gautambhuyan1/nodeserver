@@ -248,7 +248,7 @@ app.post('/likeactivity', function(req, res) {
         userid = content['userid'],
         activityid = content['activityid'];
 
-    //console.log({userid:userid, username:username, activityid:activityid});
+    console.log({userid:userid, username:username, activityid:activityid});
     if (!db) {
       initDb(function(err){});
     }
