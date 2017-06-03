@@ -143,6 +143,49 @@ exports.likeActivity = function(myDb, userid, username, activityid, callback) {
     });
 }
 
+// ### Share activity with another user
+exports.shareActivity = function(myDb, userid, username, activityid, callback) {
+    console.log("@likeActivity() ", userid);
+    var count = 0;
+    var activities;// = [activityid];
+    var jsonRsp = {"type":"likeactivity","result":"FAIL","resultcode":"NOTFOUND"};
+    //var query = {{'_id':userid}, {$set:{'interests':userInterests}}};
+    //var oid = userid;
+    var oid = mongo.ObjectID(userid);
+    //console.log("OID ", oid);
+    myDb.collection('users', function(err, collection) {
+        var userCursor = collection.find({"_id":oid});
+        userCursor.toArray(function(err, docArr){
+            activities = docArr[0].activities;
+            activities.push(activityid);
+            var userCursorNew = collection.update({"_id":oid}, {$set:{"activities":activities}}, function(error, result) {
+               if (!error) {
+                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+               }
+               //console.log(jsonRsp);
+               //callback(jsonRsp);
+           });
+        });
+    });
+    var activityOid = mongo.ObjectID(activityid);
+    myDb.collection('activities', function(err, collection) {
+        var activityCursor = collection.find({"_id":activityOid});
+        activityCursor.toArray(function(err, docArr){
+            var likes = docArr[0].likes;
+            var likelist = docArr[0].likelist;
+            likelist.push({"username":username, "userid":userid});
+            likes++;
+            var activityLink = collection.update({"_id":activityOid}, {$set:{"likes":likes, "likelist":likelist}}, function(error, result) {
+               if (!error) {
+                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+               }
+               console.log(jsonRsp);
+               callback(jsonRsp);
+           });
+        });
+    });
+}
+
 // ### Add a new interest - Admin only
 exports.addInterest = function(myDb, myInterest) {
     console.log("@addInterests() "+ myInterest);
@@ -279,7 +322,7 @@ exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
     console.log("@createUser() "+myusername+" "+myimsi);
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
-    var jsonRsp = {"type":"user", "result":"FAIL", "resultcode":"INCORRECT_OTP"};
+    var jsonRsp = {"type":"otpconfirm", "result":"FAIL", "resultcode":"INCORRECT_OTP"};
     var userToAdd = {username: myusername, imsi: myimsi, interests:[], activities:[], location:[]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('users', function(err, collection) {
@@ -293,7 +336,7 @@ exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
             else {
                 // No existing user with same credentials, add the new detail
                 collection.insert(userToAdd, options, function(err, results) {
-                    jsonRsp = {"type":"userpost", "result":"SUCCESS", "resultcode":"NONE", "userdetail": {userid: userToAdd._id}};
+                    jsonRsp = {"type":"otpconfirm", "result":"SUCCESS", "resultcode":"NONE", "userdetail": {userid: userToAdd._id}};
                     //jsonRsp = {"type":"user", "userdetail": {userid: userToAdd._id}}; 
                     //userdetail = {userid:userToAdd._id};
                     console.log(jsonRsp);
