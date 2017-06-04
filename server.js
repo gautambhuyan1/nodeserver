@@ -266,8 +266,10 @@ app.post('/createnewactivity', function(req, res) {
         userid = content['userid'],
         lat = content['lat'],
         lng = content['lng'],
+        place = content['place'],
         activity = content['activity'],
-        date = content['date'];
+        date = content['date'],
+        time = content['time'];
     //console.log({userid:userid, username:username, interest:interest, activity:activity, lat:lat, lng:lng, date:date});
     if (!db) {
       initDb(function(err){});
@@ -275,7 +277,7 @@ app.post('/createnewactivity', function(req, res) {
     var response = function(data) {
         res.json(data);
     }
-    dbapp.createActivity(db, userid, username, interest, activity, lat, lng, date, response);
+    dbapp.createActivity(db, userid, username, interest, activity, lat, lng, place, date, time, response);
 });
     
 // ### post new message

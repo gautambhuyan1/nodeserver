@@ -17,7 +17,7 @@ exports.getInterests = function(myDb, callback) {
                                 interest:docArr[doc].interest,
                                 subinterests:docArr[doc].subinterests});
             }
-            jsonRsp = {"type":"interestget","result":"SUCCESS","resultcode":"NONE","count":count, "interests": interests}; 
+            jsonRsp = {type:"interestget",result:"SUCCESS",resultcode:"NONE",count:count, interests: interests}; 
             console.log(jsonRsp);
             callback(jsonRsp);
         });
@@ -41,7 +41,7 @@ exports.getUserInterests = function(myDb, userid, callback) {
                 interests.push({interestid:docArr[doc]._id,
                                 interest:docArr[doc].interests});
             }
-            jsonRsp = {"type":"userinterest","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "interests": interests}; 
+            jsonRsp = {type:"userinterest",result:"SUCCESS",resultcode:"NONE",userid:userid,count:count, interests: interests}; 
             console.log(jsonRsp);
             callback(jsonRsp);
         });
@@ -54,7 +54,7 @@ exports.addUserInterests = function(myDb, userid, nbrInterests, userInterests, c
     console.log("@getUserInterests() ", userid);
     var count = 0;
     var interests = [];
-    var jsonRsp = {"type":"userinterestspost","result":"FAIL","resultcode":"NOTFOUND"};
+    var jsonRsp = {type:"userinterestspost",result:"FAIL",resultcode:"NOTFOUND"};
     //var query = {{'_id':userid}, {$set:{'interests':userInterests}}};
     //var oid = userid;
     var oid = mongo.ObjectID(userid);
@@ -62,7 +62,7 @@ exports.addUserInterests = function(myDb, userid, nbrInterests, userInterests, c
     myDb.collection('users', function(err, collection){
         var userCursor = collection.update({"_id":oid}, {$set:{"interests":userInterests}}, function(error, result) {
             if (!error) {
-                jsonRsp = {"type":"userinterestspost","result":"SUCCESS","resultcode":"NONE"};
+                jsonRsp = {type:"userinterestspost",result:"SUCCESS",resultcode:"NONE"};
             }
             console.log(jsonRsp);
             callback(jsonRsp);
@@ -79,7 +79,7 @@ exports.getUserActivities = function(myDb, userid, callback) {
     var oid = mongo.ObjectID(userid);
     
     var response = function(count, activities) {
-        jsonRsp = {"type":"useractivities","result":"SUCCESS","resultcode":"NONE","userid":userid,"count":count, "activities": activities}; 
+        jsonRsp = {type:"useractivities",result:"SUCCESS",resultcode:"NONE",userid:userid,count:count, activities: activities}; 
         console.log(jsonRsp);
         callback(jsonRsp);
     }
@@ -105,7 +105,7 @@ exports.likeActivity = function(myDb, userid, username, activityid, callback) {
     console.log("@likeActivity() ", userid);
     var count = 0;
     var activities;// = [activityid];
-    var jsonRsp = {"type":"likeactivity","result":"FAIL","resultcode":"NOTFOUND"};
+    var jsonRsp = {type:"likeactivity",result:"FAIL",resultcode:"NOTFOUND"};
     //var query = {{'_id':userid}, {$set:{'interests':userInterests}}};
     //var oid = userid;
     var oid = mongo.ObjectID(userid);
@@ -117,7 +117,7 @@ exports.likeActivity = function(myDb, userid, username, activityid, callback) {
             activities.push(activityid);
             var userCursorNew = collection.update({"_id":oid}, {$set:{"activities":activities}}, function(error, result) {
                if (!error) {
-                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+                   jsonRsp = {type:"likeactivity",result:"SUCCESS",resultcode:"NONE"};
                }
                //console.log(jsonRsp);
                //callback(jsonRsp);
@@ -130,11 +130,11 @@ exports.likeActivity = function(myDb, userid, username, activityid, callback) {
         activityCursor.toArray(function(err, docArr){
             var likes = docArr[0].likes;
             var likelist = docArr[0].likelist;
-            likelist.push({"username":username, "userid":userid});
+            likelist.push({username:username, userid:userid});
             likes++;
             var activityLink = collection.update({"_id":activityOid}, {$set:{"likes":likes, "likelist":likelist}}, function(error, result) {
                if (!error) {
-                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+                   jsonRsp = {type:"likeactivity",result:"SUCCESS",resultcode:"NONE"};
                }
                console.log(jsonRsp);
                callback(jsonRsp);
@@ -148,7 +148,7 @@ exports.shareActivity = function(myDb, userid, username, activityid, callback) {
     console.log("@likeActivity() ", userid);
     var count = 0;
     var activities;// = [activityid];
-    var jsonRsp = {"type":"likeactivity","result":"FAIL","resultcode":"NOTFOUND"};
+    var jsonRsp = {type:"likeactivity",result:"FAIL",resultcode:"NOTFOUND"};
     //var query = {{'_id':userid}, {$set:{'interests':userInterests}}};
     //var oid = userid;
     var oid = mongo.ObjectID(userid);
@@ -160,7 +160,7 @@ exports.shareActivity = function(myDb, userid, username, activityid, callback) {
             activities.push(activityid);
             var userCursorNew = collection.update({"_id":oid}, {$set:{"activities":activities}}, function(error, result) {
                if (!error) {
-                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+                   jsonRsp = {type:"likeactivity",result:"SUCCESS",resultcode:"NONE"};
                }
                //console.log(jsonRsp);
                //callback(jsonRsp);
@@ -173,11 +173,11 @@ exports.shareActivity = function(myDb, userid, username, activityid, callback) {
         activityCursor.toArray(function(err, docArr){
             var likes = docArr[0].likes;
             var likelist = docArr[0].likelist;
-            likelist.push({"username":username, "userid":userid});
+            likelist.push({username:username, userid:userid});
             likes++;
             var activityLink = collection.update({"_id":activityOid}, {$set:{"likes":likes, "likelist":likelist}}, function(error, result) {
                if (!error) {
-                   jsonRsp = {"type":"likeactivity","result":"SUCCESS","resultcode":"NONE"};
+                   jsonRsp = {type:"likeactivity",result:"SUCCESS",resultcode:"NONE"};
                }
                console.log(jsonRsp);
                callback(jsonRsp);
@@ -221,6 +221,12 @@ getActivitiesWithIds = function(myDb, userid, activityIdList, callback) {
                                      userid:docArr[doc].userid,
                                      username:docArr[doc].username,
                                      location:docArr[doc].location,
+                                     time:docArr[doc].time,
+                                     place:docArr[doc].place,
+                                     likes:docArr[doc].likes,
+                                     shares:docArr[doc].shares,
+                                     likelist:docArr[doc].likelist,
+                                     sharelist:docArr[doc].sharelist,
                                      date:docArr[doc].date
                                      });
                 }
@@ -273,15 +279,17 @@ exports.getActivities = function(myDb, userid, myInterestRaw, myLat, myLng, call
                                  username:docArr[doc].username,
                                  location:docArr[doc].location,
                                  date:docArr[doc].date,
+                                 time:docArr[doc].time,
+                                 place:docArr[doc].place,
                                  likes:docArr[doc].likes,
                                  shares:docArr[doc].shares,
                                  likelist:docArr[doc].likelist,
                                  sharelist:docArr[doc].sharelist
                                  });
             }
-            jsonRsp = {"type":"activityget","result":"SUCCESS","resultcode":"NONE", "count": count, "activities": activities}; 
+            jsonRsp = {type:"activityget",result:"SUCCESS",resultcode:"NONE", count: count, activities: activities}; 
             //console.log(jsonRsp.stringify());
-            console.log(JSON.stringify(jsonRsp));
+            console.log(jsonRsp);
             callback(jsonRsp);
         });
 
@@ -293,7 +301,7 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
     console.log("@createUser() "+myusername+" "+myimsi);
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
-    var jsonRsp = {"type":"user", "result":"FAIL", "resultcode":"EXISTS"};
+    var jsonRsp = {type:"user", result:"FAIL", resultcode:"EXISTS"};
     var userToAdd = {username: myusername, imsi: myimsi, interests:[], activities:[], location:[]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('users', function(err, collection) {
@@ -302,12 +310,13 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
         var userCursor = collection.findOne(query, function(error, result) {
             if (result != null) {
                 // There is already a user with same details. Return failure.
+                console.log(jsonRsp);
                 callback(jsonRsp);
             }
             else {
                 // No existing user with same credentials, add the new detail
                 collection.insert(userToAdd, options, function(err, results) {
-                    jsonRsp = {"type":"userpost", "result":"SUCCESS", "resultcode":"NONE"};
+                    jsonRsp = {type:"userpost", result:"SUCCESS", resultcode:"NONE"};
                     //userdetail = {userid:userToAdd._id};
                     console.log(jsonRsp);
                     callback(jsonRsp);
@@ -319,10 +328,10 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
 
 // ### Create a new user - store username, imsi
 exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
-    console.log("@createUser() "+myusername+" "+myimsi);
+    console.log("@confirmOtp() "+myusername+" "+myimsi);
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
-    var jsonRsp = {"type":"otpconfirm", "result":"FAIL", "resultcode":"INCORRECT_OTP"};
+    var jsonRsp = {type:"otpconfirm", result:"FAIL", resultcode:"INCORRECT_OTP"};
     var userToAdd = {username: myusername, imsi: myimsi, interests:[], activities:[], location:[]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('users', function(err, collection) {
@@ -331,12 +340,13 @@ exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
         var userCursor = collection.findOne(query, function(error, result) {
             if (result != null) {
                 // There is already a user with same details. Return failure.
+                console.log(jsonRsp);
                 callback(jsonRsp);
             }
             else {
                 // No existing user with same credentials, add the new detail
                 collection.insert(userToAdd, options, function(err, results) {
-                    jsonRsp = {"type":"otpconfirm", "result":"SUCCESS", "resultcode":"NONE", "userdetail": {userid: userToAdd._id}};
+                    jsonRsp = {type:"otpconfirm", result:"SUCCESS", resultcode:"NONE", userdetail: {userid: userToAdd._id, username:myusername, imsi:myimsi}};
                     //jsonRsp = {"type":"user", "userdetail": {userid: userToAdd._id}}; 
                     //userdetail = {userid:userToAdd._id};
                     console.log(jsonRsp);
@@ -348,13 +358,13 @@ exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
 }
 
 // ### Create a new activity - store interest, location and activity
-exports.createActivity = function(myDb, userid, username, myInterest, myActivity, myLat, myLng, myDate, callback) {
-    console.log("@createActivities() "+userid+" "+username+" "+myInterest+" "+myActivity+" "+myLat+" "+myLng+" "+myDate);
-    var activityToAdd = {userid: userid, username: username, interest:myInterest, likes:0, shares:0, likelist:[], sharelist:[], activity: myActivity, date: myDate, location:[parseFloat(myLat), parseFloat(myLng)]};
+exports.createActivity = function(myDb, userid, username, myInterest, myActivity, myLat, myLng, place, myDate, time, callback) {
+    console.log("@createActivities() "+userid+" "+username+" "+myInterest+" "+myActivity+" "+myLat+" "+myLng+" "+myDate+" "+place+" "+time);
+    var activityToAdd = {userid: userid, username: username, interest:myInterest, likes:0, shares:0, likelist:[], sharelist:[], activity: myActivity, place:place, date: myDate, time:time, location:[parseFloat(myLat), parseFloat(myLng)]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('activities', function(err, collection) {
         collection.insert(activityToAdd, options, function(err, results) {
-            var jsonRsp = {"type":"activitypost","result":"SUCCESS","resultcode":"COMPLETE"};
+            var jsonRsp = {type:"activitypost",result:"SUCCESS",resultcode:"COMPLETE"};
             callback(jsonRsp);
         });
     });
@@ -373,9 +383,9 @@ exports.getMessages = function(myDb, myActivityId, callback) {
         messageCursor.toArray(function(err, docArr){
             for(doc in docArr) {
                 count++;
-                messages.push({"username": docArr[doc].username, "messageid":docArr[doc]._id, "message":docArr[doc].message});
+                messages.push({username: docArr[doc].username, messageid:docArr[doc]._id, message:docArr[doc].message});
             }
-            var jsonRsp = {"type":"messageget", "result":"SUCCESS","resultcode":"NONE","count":count, "activityid": myActivityId, "messages": messages}; 
+            var jsonRsp = {type:"messageget", result:"SUCCESS",resultcode:"NONE",count:count, activityid: myActivityId, messages: messages}; 
             console.log(jsonRsp);
             callback(jsonRsp);
         });
@@ -389,7 +399,7 @@ exports.createMessage = function(myDb, userid, username, activityId, msg, callba
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('messages', function(err, collection) {
         collection.insert(messageToAdd, options, function(err, results) {
-            var jsonRsp = {"type":"messagepost","result":"SUCCESS","resultcode":"COMPLETE"}
+            var jsonRsp = {type:"messagepost",result:"SUCCESS",resultcode:"COMPLETE"}
             console.log(jsonRsp);
             callback(jsonRsp);
         });
