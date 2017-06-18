@@ -152,7 +152,7 @@ app.get('/messages/activityid/:activityid', function(req, res) {
 // ### get user activities
 app.get('/useractivities/userid/:userid', function(req, res) {
     var userid = req.params.userid;
-    //console.log("Userinterests", userid);
+    //console.log("Useractivities", userid);
     var response = function(data) {
         res.json(data);
     }
@@ -165,7 +165,7 @@ app.get('/useractivities/userid/:userid', function(req, res) {
 // ### get user interests
 app.get('/userinterests/userid/:userid', function(req, res) {
     var userid = req.params.userid;
-    //console.log("Userinterests", userid);
+    console.log("Userinterests", userid);
     var response = function(data) {
         res.json(data);
     }
@@ -173,6 +173,20 @@ app.get('/userinterests/userid/:userid', function(req, res) {
       initDb(function(err){});
     }
     dbapp.getUserInterests(db, userid, response);
+});
+
+// ### send otp
+app.get('/otpsend/username/:username/imsi/:imsi', function(req, res) {
+    var username = req.params.username;
+    var imsi = req.params.imsi;
+    if (!db) {
+      initDb(function(err){});
+    }
+    var response = function(data) {
+        res.json(data);
+    }
+    //console.log("Create user", username, imsi);
+    dbapp.sendOtp(db, username, imsi, response);
 });
 
 // ### post new user
@@ -192,10 +206,28 @@ app.post('/user', function(req, res) {
 });
 
 // ### post new user
+app.post('/edituser', function(req, res) {
+    var content = req.body;
+    var username = content['username'],
+        userid = content['userid'],
+        imsi = content['imsi'];
+
+    if (!db) {
+      initDb(function(err){});
+    }
+    var response = function(data) {
+        res.json(data);
+    }
+    //console.log("Create user", username, imsi);
+    dbapp.editUser(db, userid, username, imsi, response);
+});
+
+// ### confirm otp
 app.post('/otpconfirm', function(req, res) {
     var content = req.body;
     var username = content['username'],
         imsi = content['imsi'],
+        userid = content['userid'],
         otp = content['otp'];
 
     if (!db) {
@@ -205,7 +237,7 @@ app.post('/otpconfirm', function(req, res) {
         res.json(data);
     }
     //console.log("Create user", username, imsi);
-    dbapp.confirmOtp(db, username, imsi, otp, response);
+    dbapp.confirmOtp(db, username, imsi, userid, otp, response);
 });
 
 // ### post new interest for a given user
@@ -259,6 +291,40 @@ app.post('/likeactivity', function(req, res) {
 });
     
 // ### post new activity
+app.post('/deleteactivity', function(req, res) {
+    var content = req.body;
+    var activityid = content['activityid'],
+        userid = content['userid'];
+    console.log({userid:userid, activityid:activityid});
+    if (!db) {
+      initDb(function(err){});
+    }
+    var response = function(data) {
+        res.json(data);
+    }
+    dbapp.deleteActivity(db, userid, activityid, response );
+});
+    
+// ### post new activity
+app.post('/editactivity', function(req, res) {
+    var content = req.body;
+    var interest = content['interest'],
+        userid = content['userid'],
+        activityid = content['activityid'],
+        activity = content['activity'],
+        date = content['date'],
+        time = content['time'];
+    console.log({userid:userid, activityid:activityid, interest:interest, activity:activity, date:date, time:time});
+    if (!db) {
+      initDb(function(err){});
+    }
+    var response = function(data) {
+        res.json(data);
+    }
+    dbapp.editActivity(db, userid, interest, activityid, activity, date, time, response);
+});
+    
+// ### post new activity
 app.post('/createnewactivity', function(req, res) {
     var content = req.body;
     var interest = content['interest'],
@@ -303,10 +369,10 @@ app.post('/createnewmessage', function(req, res) {
     
 // ### generic function
 app.use(function(req, res, next) {
-    console.log("Unsupported function", req);
+    //console.log("Unsupported function", req);
     //res.writeHead(200, {'Content-type' : 'text/html'});
     //res.end("");
-    res.json({done:true});
+    //res.json({done:true});
     next();
 });
 

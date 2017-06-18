@@ -32,20 +32,19 @@ exports.getUserInterests = function(myDb, userid, callback) {
     var count = 0;
     var jsonRsp;
     var oid = mongo.ObjectID(userid);
+    var interests = [];
     myDb.collection('users', function(err, collection){
         var interestCursor = collection.find({"_id":oid});
         interestCursor.toArray(function(err, docArr){
             for(doc in docArr) {
                 count++;
-                console.log("Interests ", docArr[doc].interests);
-                interests.push({interestid:docArr[doc]._id,
-                                interest:docArr[doc].interests});
+                interests = docArr[doc].interests;
             }
-            jsonRsp = {type:"userinterest",result:"SUCCESS",resultcode:"NONE",userid:userid,count:count, interests: interests}; 
+            count = interests.length;
+            jsonRsp = {type:"userinterest",result:"SUCCESS",resultcode:"NONE",userid:userid,count:count, interests: interests};
             console.log(jsonRsp);
             callback(jsonRsp);
         });
-
     });
 }
 
@@ -77,9 +76,9 @@ exports.getUserActivities = function(myDb, userid, callback) {
     var myActivities = [];
     var jsonRsp;
     var oid = mongo.ObjectID(userid);
-    
+   
     var response = function(count, activities) {
-        jsonRsp = {type:"useractivities",result:"SUCCESS",resultcode:"NONE",userid:userid,count:count, activities: activities}; 
+        jsonRsp = {type:"useractivities",result:"SUCCESS",resultcode:"NONE",userid:userid,count:count, activities: activities};
         console.log(jsonRsp);
         callback(jsonRsp);
     }
@@ -206,6 +205,9 @@ getActivitiesWithIds = function(myDb, userid, activityIdList, callback) {
     var count = 0;
     var jsonRsp;
     console.log("@getActivitiesWithIds: ", activityIdList);
+    if (activityIdList.length == 0) {
+        callback(count, activities);
+    }
     myDb.collection('activities', function(err, collection){
    
         for (act = 0; act<activityIdList.length; act++) {
@@ -302,22 +304,24 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
     var jsonRsp = {type:"user", result:"FAIL", resultcode:"EXISTS"};
-    var userToAdd = {username: myusername, imsi: myimsi, interests:[], activities:[], location:[]};
+    var userToAdd = {username: myusername, imsi: myimsi, otp:"1234", active:"false", interests:[], activities:[], location:[]};
     var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
     myDb.collection('users', function(err, collection) {
         var query = {$and:[{'username':{$eq:myusername}}, {'imsi':{$eq:myimsi}}]};
         //console.log("Query: " + query.tostring);
         var userCursor = collection.findOne(query, function(error, result) {
             if (result != null) {
-                // There is already a user with same details. Return failure.
+                // User exists, send otp and user id
+                userdetail = {userid:result._id};
+                jsonRsp = {type:"userpost", result:"SUCCESS", resultcode:"USEREXISTS", userdetail: userdetail};
                 console.log(jsonRsp);
                 callback(jsonRsp);
             }
             else {
                 // No existing user with same credentials, add the new detail
                 collection.insert(userToAdd, options, function(err, results) {
-                    jsonRsp = {type:"userpost", result:"SUCCESS", resultcode:"NONE"};
-                    //userdetail = {userid:userToAdd._id};
+                    userdetail = {userid:userToAdd._id};
+                    jsonRsp = {type:"userpost", result:"SUCCESS", resultcode:"NONE", userdetail:userdetail};
                     console.log(jsonRsp);
                     callback(jsonRsp);
                 });
@@ -326,8 +330,32 @@ exports.createUser = function(myDb, myusername, myimsi, callback) {
     });
 }
 
+// ### Send new otp
+exports.sendOtp = function(myDb, myusername, myimsi, callback) {
+    console.log("@sendotp() "+myusername+" "+myimsi+" "+myDb);
+    var jsonRsp = {type:"user", result:"FAIL", resultcode:"USERNOTFOUND"};
+    var options = {w:1, wtimeout: 5000, journal:true, fsync:false};
+    myDb.collection('users', function(err, collection) {
+        var query = {$and:[{'username':{$eq:myusername}}, {'imsi':{$eq:myimsi}}]};
+        //console.log("Query: " + query.tostring);
+        var userCursor = collection.findOne(query, function(error, result) {
+            if (result != null) {
+                // User exists, send otp and user id
+                jsonRsp = {type:"userdetails", result:"SUCCESS", resultcode:"NONE"};
+                userdetail = {userid:result._id};
+                jsonRsp = {type:"userpost", result:"SUCCESS", resultcode:"NONE", userdetail: userdetail};
+                console.log(jsonRsp);
+                callback(jsonRsp);
+            }
+            else {
+                callback(jsonRsp);
+            }
+        });
+    });
+}
+
 // ### Create a new user - store username, imsi
-exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
+exports.confirmOtp = function(myDb, myusername, myimsi, userid, otp, callback) {
     console.log("@confirmOtp() "+myusername+" "+myimsi);
     //var userdetail = {};
     //var jsonRsp = {"type":"user", "userdetail": userdetail}; 
@@ -339,19 +367,28 @@ exports.confirmOtp = function(myDb, myusername, myimsi, otp, callback) {
         //console.log("Query: " + query.tostring);
         var userCursor = collection.findOne(query, function(error, result) {
             if (result != null) {
-                // There is already a user with same details. Return failure.
-                console.log(jsonRsp);
-                callback(jsonRsp);
+                console.log(result["otp"]);
+                if (result['otp'] != otp) {
+                    callback(jsonRsp);
+                    return;
+                }
+                var oid = mongo.ObjectID(userid);
+                myDb.collection('users', function(err, collection){
+                    var userCursor = collection.update({"_id":oid}, {$set:{"active":"true"}}, function(error, result) {
+                       
+                            //console.log("### Done", error, result.result.n, result);
+                        if (result.result.n == 1) {
+                            jsonRsp = {type:"otpconfirm",result:"SUCCESS",resultcode:"NONE"};
+                        }
+                        console.log(jsonRsp);
+                        callback(jsonRsp);
+                    });
+            
+                });
             }
             else {
-                // No existing user with same credentials, add the new detail
-                collection.insert(userToAdd, options, function(err, results) {
-                    jsonRsp = {type:"otpconfirm", result:"SUCCESS", resultcode:"NONE", userdetail: {userid: userToAdd._id, username:myusername, imsi:myimsi}};
-                    //jsonRsp = {"type":"user", "userdetail": {userid: userToAdd._id}}; 
-                    //userdetail = {userid:userToAdd._id};
-                    console.log(jsonRsp);
-                    callback(jsonRsp);
-                });
+                console.log(jsonRsp);
+                callback(jsonRsp);
             }
         });
     });
@@ -367,6 +404,54 @@ exports.createActivity = function(myDb, userid, username, myInterest, myActivity
             var jsonRsp = {type:"activitypost",result:"SUCCESS",resultcode:"COMPLETE"};
             callback(jsonRsp);
         });
+    });
+}
+
+// ### Delete an existing activity
+exports.deleteActivity = function(myDb, userid, myActivity, callback) {
+    console.log("@deleteActivity() "+userid+" "+myActivity);
+    var oid = mongo.ObjectID(myActivity);
+    var query = {$and:[{'_id':{$eq:oid}}, {'userid':{$eq:userid}}]};
+    myDb.collection('activities', function(err, collection) {
+        collection.remove(query, function(err, results) {
+            var jsonRsp = {type:"deleteactivity",result:"SUCCESS",resultcode:"COMPLETE"};
+            callback(jsonRsp);
+        });
+    });
+}
+
+// ### Edit an existing activity
+exports.editActivity = function(myDb, userid, interest, activityid, activity, date, time, response) {
+    console.log("@editActivity() "+userid+" "+activityid);
+    var oid = mongo.ObjectID(activityid);
+    console.log("OID: ", oid);
+    var query = {$and:[{'_id':{$eq:oid}}, {'userid':{$eq:userid}}]};
+    jsonRsp = {type:"editactivity",result:"FAIL",resultcode:"NONE"};
+    myDb.collection('activities', function(err, collection){
+        var userCursor = collection.update(query, {$set:{"interest":interest, "activity":activity, "date":date, "time":time}}, function(error, result) {
+            if (!error) {
+                jsonRsp = {type:"editactivity",result:"SUCCESS",resultcode:"NONE"};
+            }
+            console.log(jsonRsp);
+            response(jsonRsp);
+        });
+
+    });
+}
+
+// ### Edit an existing user
+exports.editUser = function(myDb, userid, username, imsi, callback) {
+    console.log("@editUser() "+userid+" "+username+" "+imsi);
+    var oid = mongo.ObjectID(userid);
+    myDb.collection('users', function(err, collection){
+        var userCursor = collection.update({"_id":oid}, {$set:{"username":username, "imsi":imsi}}, function(error, result) {
+            if (!error) {
+                jsonRsp = {type:"edituser",result:"SUCCESS",resultcode:"NONE"};
+            }
+            console.log(jsonRsp);
+            callback(jsonRsp);
+        });
+
     });
 }
 
